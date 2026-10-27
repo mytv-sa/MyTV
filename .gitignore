@@ -1,0 +1,33 @@
+*.apk
+__pycache__/
+node_modules/
+android/.gradle/
+android/build/
+android/*/build/
+android/local.properties
+optimize/venv/
+optimize/adbkey/
+optimize/.tv_host
+optimize/backup-*.txt
+optimize/run/
+optimize/run-*/
+optimize/lists/mine.txt
+*.p12
+*.jks
+*.keystore
+
+# written when the CI tools in .github/tools are run locally (the workflows push these to data-* branches)
+/teams/
+/hadith/
+/verses/
+/unsplash/
+/quran-verify/
+
+# Thmanyah: its licence allows the files only inside a built product, so they come from the private
+# mytv-sa/mytv-fonts repo at build time (CI), never from here; mytv.html inlines them, so it is not committed either
+assets/fonts/Thmanyah*.woff2
+android/launcher/src/main/assets/fonts/Thmanyah*.otf
+dist/mytv.html
+.fonts-private/
+/Thmanyah-Font-Family/
+/Thmanyah-Font-Family.zip
