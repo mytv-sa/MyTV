@@ -21,6 +21,8 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- the adhan sets the TV's volume to its own level and puts it back afterwards -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- «تنبيه بإشعار»: the prayer's card over any app (AdhanPopup); granted over ADB by optimize/install.sh -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <!-- the screensaver (same signing key) asks what is playing, for its «يُتلى الآن» card -->
     <permission
@@ -190,6 +192,8 @@
                 <action android:name="sa.mytv.home.ADHAN_RESCHEDULE" />
                 <action android:name="sa.mytv.home.ADHAN_ON" />
                 <action android:name="sa.mytv.home.ADHAN_OFF" />
+                <action android:name="sa.mytv.home.ADHAN_POPUP" />
+                <action android:name="sa.mytv.home.POPUP_NOW" />
                 <action android:name="sa.mytv.home.VOICE" />
                 <action android:name="sa.mytv.home.ADHAN_OWN" />
             </intent-filter>

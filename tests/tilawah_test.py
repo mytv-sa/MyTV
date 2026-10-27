@@ -259,6 +259,19 @@ check("device location comes from the screensaver",
 prefs_src = text(TILAWAH / "Prefs.java")
 check("the adhan is off until it is switched on", 'getBoolean("adhan_on", false)' in prefs_src)
 check("the adhan has its own volume, 30% by default", 'getInt("adhan_volume", 30)' in prefs_src)
+check("an older TV's «adhan on» stays the sound", 'getBoolean("adhan_on", false) ? MODE_SOUND : MODE_OFF' in prefs_src)
+check("the TV's volume comes back when another app takes the sound during the adhan",
+      "&& source == Prefs.SOURCE_ADHAN) {" in service_src and "resumeAfterAdhan = false;\n            stopPlayback();" in service_src)
+check("the TV's volume is kept on disk and put back if the service was ended mid-adhan",
+      "prefs.setSavedVolume(savedVolume)" in service_src and "volumeLeftOver();" in service_src and "commit()" in prefs_src)
+check("a guard puts the volume back 6 minutes after the adhan started", "VOLUME_GUARD_MS = 6 * 60 * 1000L" in service_src)
+check("pausing the adhan ends it (the volume does not stay at its level)",
+      "if (source == Prefs.SOURCE_ADHAN) { finishAdhan(); return; }" in service_src)
+popup_src = text(TILAWAH / "AdhanPopup.java")
+check("the silent card: 40 seconds, «إغلاق», over the apps", "SECONDS = 40" in popup_src and '"إغلاق"' in popup_src
+      and "TYPE_APPLICATION_OVERLAY" in popup_src)
+check("the alarm shows the card in the silent mode, the sound otherwise",
+      "MODE_POPUP.equals(prefs.adhanMode())) AdhanPopup.show" in text(TILAWAH / "AdhanReceiver.java"))
 check("the volume permission is declared", "MODIFY_AUDIO_SETTINGS" in manifest)
 check("the adhan sets the volume and puts it back",
       "setStreamVolume" in service_src and "adhanVolumeBack" in service_src)

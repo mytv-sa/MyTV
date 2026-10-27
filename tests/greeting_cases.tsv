@@ -1,13 +1,32 @@
-# kind, inputs..., expected, note. part: now fajr dhuhr asr isha (minutes of the day); weather: code dust city temp digits; sun: label hh:mm digits
-part	120	290	700	900	1155	تصبح على خير	before Fajr: still the night
+# kind, inputs..., expected, note. part: now fajr dhuhr asr isha (minutes of the day); part2: the same, then dayStart nightStart (-1 off);
+# start: spec prayer (minutes, midnight 0); word: greeting word; weather: code dust city temp digits; sun: label hh:mm digits
+part	120	290	700	900	1155	تصبحون على خير	before Fajr: still the night
 part	290	290	700	900	1155	صباح الخير	Fajr itself
 part	600	290	700	900	1155	صباح الخير	mid-morning
-part	700	290	700	900	1155	طاب يومك	Dhuhr itself
-part	899	290	700	900	1155	طاب يومك	a minute before Asr
+part	700	290	700	900	1155	طابت أيامكم	Dhuhr itself
+part	899	290	700	900	1155	طابت أيامكم	a minute before Asr
 part	900	290	700	900	1155	مساء الخير	Asr itself
 part	1154	290	700	900	1155	مساء الخير	a minute before Isha
-part	1155	290	700	900	1155	تصبح على خير	Isha itself
-part	1400	290	700	900	1155	تصبح على خير	late night
+part	1155	290	700	900	1155	تصبحون على خير	Isha itself
+part	1400	290	700	900	1155	تصبحون على خير	late night
+part2	750	290	700	900	1155	-1	1155	صباح الخير	«طابت أيامكم» off: the morning's until Asr
+part2	750	290	700	900	1155	780	1155	صباح الخير	«طابت أيامكم» from 1 pm: not yet at 12:30
+part2	800	290	700	900	1155	780	1155	طابت أيامكم	from 1 pm: at 1:20
+part2	900	290	700	900	1155	780	1155	مساء الخير	Asr ends it whatever its start
+part2	1200	290	700	900	1155	700	1320	مساء الخير	«تصبحون على خير» from 10 pm: not yet at 8 pm
+part2	1330	290	700	900	1155	700	1320	تصبحون على خير	from 10 pm: at 10:10
+part2	1200	290	700	900	1155	700	-1	مساء الخير	«تصبحون على خير» off: the evening's after Isha
+part2	120	290	700	900	1155	700	-1	مساء الخير	off: the evening's until Fajr too
+part2	1430	290	700	900	1155	700	1440	مساء الخير	from midnight: not yet at 11:50 pm
+part2	30	290	700	900	1155	700	1440	تصبحون على خير	from midnight: at 12:30 am
+start	dhuhr	700	700	dhuhr: the prayer's moment
+start	14	700	840	an hour of the day
+start	0	1155	1440	0 is the coming midnight
+start	off	1155	-1	off
+start	isha	1155	1155	isha: the prayer's moment
+word	صباح الخير	عائلتي	صباح الخير عائلتي	the word after the greeting
+word	مساء الخير		مساء الخير	no word: the greeting alone
+word	تصبحون على خير	 أهلي 	تصبحون على خير أهلي	spaces around it are dropped
 weather	0	0	الرياض	31	hindi	سماء صافية في الرياض، ٣١°	clear
 weather	0	0	Riyadh	30.6	latin	سماء صافية في Riyadh، 31°	latin digits, rounded
 weather	2	0	جدة	28.4	hindi	غائم جزئيًا في جدة، ٢٨°	partly cloudy

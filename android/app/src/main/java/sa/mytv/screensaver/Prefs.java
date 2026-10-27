@@ -270,11 +270,16 @@ final class Prefs {
     void setStocks(List<String> v) { setList("stocks", v); }
 
     /** Chosen markets in order, the keys of MARKETS. */
+    /** the markets at the top left; empty when the person took them all off ("none" kept, so the default does not come back) */
     List<String> markets() {
+        if ("none".equals(sp.getString("markets", ""))) return new ArrayList<>();
         List<String> v = list("markets");
         return v.isEmpty() ? java.util.Arrays.asList(DEFAULT_MARKETS.split(",")) : v;
     }
-    void setMarkets(List<String> v) { setList("markets", v); }
+    void setMarkets(List<String> v) {
+        if (v.isEmpty()) sp.edit().putString("markets", "none").apply();
+        else setList("markets", v);
+    }
 
     String mkStyle() { return sp.getString("mkStyle", "arrows"); }
     void setMkStyle(String v) { sp.edit().putString("mkStyle", v).apply(); }
@@ -385,7 +390,7 @@ final class Prefs {
             + "&yearstrip=" + (yearStrip() ? "1" : "0")
             + PrayerAdj.fragment(prayerAdjOn(), prayerAdj())
             + "&national=" + national()
-            + "&markets=" + join(markets(), ",")
+            + "&markets=" + (markets().isEmpty() ? "none" : join(markets(), ","))
             + "&mkstyle=" + mkStyle()
             + "&stocks=" + join(stocks(), ",")
             + "&slot=" + slot()
@@ -542,6 +547,50 @@ final class Prefs {
     /** The greeting and the weather line on the launcher's home screen (default on). Off: the plain good-morning it had. */
     boolean greeting() { return sp.getBoolean("greeting", true); }
     void setGreeting(boolean v) { sp.edit().putBoolean("greeting", v).apply(); }
+
+    /** «صباح الخير عائلتي»: a word after the greeting, up to 11 characters with the spaces; shown only while it is on. */
+    static final int GREET_WORD_MAX = 11;
+    boolean greetWordOn() { return sp.getBoolean("greetWordOn", false); }
+    void setGreetWordOn(boolean v) { sp.edit().putBoolean("greetWordOn", v).apply(); }
+    String greetWord() { return sp.getString("greetWord", ""); }
+    void setGreetWord(String v) { sp.edit().putString("greetWord", v).apply(); }
+    /** what the launcher shows after the greeting: the word while it is on, else nothing */
+    String greetWordShown() { return greetWordOn() ? greetWord() : ""; }
+
+    /** null when the word may be kept, else why not (in Arabic) */
+    static String greetWordProblem(String v) {
+        if (v.isEmpty()) return "اكتب الكلمة";
+        if (v.length() > GREET_WORD_MAX) return "الحد " + GREET_WORD_MAX + " حرفًا مع المسافات";
+        if (v.contains("|") || v.contains("\n")) return "لا يُقبل هذا الرمز";
+        return null;
+    }
+
+    // when «طابت أيامكم» and «تصبحون على خير» start: at Dhuhr and Isha (the default), or at an hour of the city's day
+    static final String[][] GREET_DAY_STARTS = {{"dhuhr", "من الظهر"}, {"13", "من ١ ظهرًا"}, {"14", "من ٢ ظهرًا"}, {"15", "من ٣ عصرًا"}};
+    static final String[][] GREET_NIGHT_STARTS = {{"isha", "من العشاء"}, {"21", "من ٩ مساءً"}, {"22", "من ١٠ مساءً"},
+        {"23", "من ١١ مساءً"}, {"0", "من ١٢ منتصف الليل"}};
+    boolean greetDayOn() { return sp.getBoolean("greetDayOn", true); }
+    void setGreetDayOn(boolean v) { sp.edit().putBoolean("greetDayOn", v).apply(); }
+    String greetDayStart() { return pick(GREET_DAY_STARTS, sp.getString("greetDayStart", "dhuhr")); }
+    void setGreetDayStart(String v) { sp.edit().putString("greetDayStart", v).apply(); }
+    boolean greetNightOn() { return sp.getBoolean("greetNightOn", true); }
+    void setGreetNightOn(boolean v) { sp.edit().putBoolean("greetNightOn", v).apply(); }
+    String greetNightStart() { return pick(GREET_NIGHT_STARTS, sp.getString("greetNightStart", "isha")); }
+    void setGreetNightStart(String v) { sp.edit().putString("greetNightStart", v).apply(); }
+    /** for the launcher: "off", or when it starts */
+    String greetDay() { return greetDayOn() ? greetDayStart() : "off"; }
+    String greetNight() { return greetNightOn() ? greetNightStart() : "off"; }
+
+    static String startLabel(String[][] all, String v) {
+        for (String[] s : all) if (s[0].equals(v)) return s[1];
+        return all[0][1];
+    }
+
+    /** a value of the list, else its first (the default) */
+    private static String pick(String[][] all, String v) {
+        for (String[] s : all) if (s[0].equals(v)) return v;
+        return all[0][0];
+    }
 
     List<String> teamIds() {
         List<String> ids = new ArrayList<>();

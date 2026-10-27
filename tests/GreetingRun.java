@@ -21,6 +21,18 @@ public final class GreetingRun {
                     r = GreetingText.greeting(GreetingText.part(m[0], m[1], m[2], m[3], m[4]));
                     break;
                 }
+                case "part2": {   // part2  now  fajr  dhuhr  asr  isha  dayStart  nightStart  (minutes of the day; -1 = that greeting off)
+                    long[] m = new long[7];
+                    for (int i = 0; i < 7; i++) { long v = Long.parseLong(f[i + 1]); m[i] = v < 0 ? -1 : v * 60000L; }
+                    r = GreetingText.greeting(GreetingText.part(m[0], m[1], m[2], m[3], m[4], m[5], m[6]));
+                    break;
+                }
+                case "start": {   // start  spec  prayer  (minutes; midnight is 0): the answer in minutes, -1 when off
+                    long s = GreetingText.start(f[1], Long.parseLong(f[2]) * 60000L, 0);
+                    r = String.valueOf(s < 0 ? -1 : s / 60000L);
+                    break;
+                }
+                case "word": r = GreetingText.withWord(f[1], f[2]); break;
                 case "weather": r = GreetingText.weather(Integer.parseInt(f[1]), Double.parseDouble(f[2]), f[3], Double.parseDouble(f[4]), "latin".equals(f[5])); break;
                 case "sun": r = GreetingText.sun(f[1], f[2], "latin".equals(f[3])); break;
                 default: r = "?";

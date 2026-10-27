@@ -11,20 +11,47 @@ final class GreetingText {
 
     /** Fajr to Dhuhr, Dhuhr to Asr, Asr to Isha, and the night from Isha to the next Fajr. Times in millis. */
     static int part(long now, long fajr, long dhuhr, long asr, long isha) {
-        if (now < fajr) return NIGHT;       // still the night before
+        return part(now, fajr, dhuhr, asr, isha, dhuhr, isha);
+    }
+
+    /**
+     * The same, with «طابت أيامكم» from dayStart and «تصبحون على خير» from nightStart (-1: that one is off, and the greeting
+     * before it goes on: the morning's until Asr, the evening's until Fajr). After midnight the night has begun whatever its start.
+     */
+    static int part(long now, long fajr, long dhuhr, long asr, long isha, long dayStart, long nightStart) {
+        if (now < fajr) return nightStart < 0 ? EVENING : NIGHT;
         if (now < dhuhr) return MORNING;
-        if (now < asr) return DAY;
-        if (now < isha) return EVENING;
-        return NIGHT;
+        if (now < asr) return dayStart >= 0 && now >= dayStart ? DAY : MORNING;
+        return nightStart >= 0 && now >= nightStart ? NIGHT : EVENING;
+    }
+
+    /**
+     * When a greeting starts, from its setting: "off" gives -1, "dhuhr" or "isha" the prayer's moment, an hour ("13", "21"; "0" is
+     * midnight, the end of today) that hour of the city's day. midnight: the start of the city's day, in millis.
+     */
+    static long start(String spec, long prayer, long midnight) {
+        if (spec == null || spec.isEmpty() || "dhuhr".equals(spec) || "isha".equals(spec)) return prayer;
+        if ("off".equals(spec)) return -1;
+        try {
+            int h = Integer.parseInt(spec);
+            return midnight + (h == 0 ? 24 : h) * 3600000L;
+        } catch (NumberFormatException e) {
+            return prayer;
+        }
     }
 
     static String greeting(int part) {
         switch (part) {
             case MORNING: return "صباح الخير";
-            case DAY: return "طاب يومك";
+            case DAY: return "طابت أيامكم";
             case EVENING: return "مساء الخير";
-            default: return "تصبح على خير";
+            default: return "تصبحون على خير";
         }
+    }
+
+    /** «صباح الخير عائلتي»: the word the person chose after the greeting (empty: the greeting alone). */
+    static String withWord(String greeting, String word) {
+        return word == null || word.trim().isEmpty() ? greeting : greeting + " " + word.trim();
     }
 
     /** Open-Meteo's WMO weather code, as a short phrase that goes before «في المدينة». */

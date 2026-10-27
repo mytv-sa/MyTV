@@ -39,6 +39,14 @@ public class MusicReceiver extends BroadcastReceiver {
                 prefs.setAdhanOn("sa.mytv.home.ADHAN_ON".equals(action));
                 AdhanScheduler.schedule(context);
                 return;
+            case "sa.mytv.home.ADHAN_POPUP":   // optimize/music.sh adhan popup: the silent card at prayer time
+                prefs.setAdhanMode(Prefs.MODE_POPUP);
+                AdhanScheduler.schedule(context);
+                setResultData(AdhanPopup.canOverlay(context) ? "popup" : "popup (no overlay permission: optimize/install.sh launcher grants it)");
+                return;
+            case "sa.mytv.home.POPUP_NOW":   // optimize/music.sh adhan popup-now: the card at once, to see it
+                AdhanPopup.show(context, 0);
+                return;
             case "sa.mytv.home.ADHAN_VOLUME": {   // optimize/music.sh adhan volume 60
                 int percent = intent.getIntExtra("percent", -1);
                 if (percent < 10 || percent > 100) return;
@@ -175,7 +183,7 @@ public class MusicReceiver extends BroadcastReceiver {
                 + "|pos=" + position
                 + "|dur=" + duration
                 + "|sleep=" + sleepLeft
-                + "|adhan=" + (prefs.adhanOn() ? "on" : "off")
+                + "|adhan=" + (Prefs.MODE_SOUND.equals(prefs.adhanMode()) ? "on" : prefs.adhanMode())
                 + "|voice=" + (prefs.playVoice(context) == Prefs.OWN ? "own" : String.valueOf(prefs.voice()))
                 + "|adhan_volume=" + prefs.adhanVolume()
                 + "|adhan_exact=" + (AdhanScheduler.exactAllowed(context) ? 1 : 0)

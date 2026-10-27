@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- the build: UTC time (YYYYMMDDHHMMSS) of the newest commit of the page's sources, put in by src/build.py. The app loads the page with the newer stamp (its own
      copy or a downloaded one), never by file time, and does not keep a download whose stamp is older than its own (Updater, PageStamp). -->
-<meta name="mytv-build" content="20261027035751">
+<meta name="mytv-build" content="20261027062820">
 <title>شاشة تلفزيوني</title>
 <style>
   @font-face{font-family:'Thmanyah';font-weight:300;font-style:normal;font-display:block;src:url("https://raw.githubusercontent.com/mytv-sa/MyTV/master/assets/fonts/Thmanyah-Light.woff2") format("woff2")}
@@ -647,9 +647,9 @@ const CONFIG = {
   digits: _Q.get('digits') === 'latin' ? 'latin' : 'hindi',
   // the look of the card beside the clock: #cardstyle=current|dark1|glass1|dark3|glass3 (anything else = current)
   cardStyle: (v => ['dark1','glass1','dark3','glass3'].includes(v) ? v : 'current')(_Q.get('cardstyle')),
-  // the markets at the top left: #markets=tasi,spx,btc (up to 4 of tasi aramco spx btc gold silver xrp; anything else = the default)
-  // and #mkstyle=arrows (a ▲/▼ only, the default) or prices (the price and the day's change)
-  markets: (l => l.length ? l : ['tasi','spx','btc'])(
+  // the markets at the top left: #markets=tasi,spx,btc (up to 4 of tasi aramco spx btc gold silver xrp; none = no markets line;
+  // anything else = the default) and #mkstyle=arrows (a ▲/▼ only, the default) or prices (the price and the day's change)
+  markets: _list('markets').includes('none') ? [] : (l => l.length ? l : ['tasi','spx','btc'])(
     _list('markets').filter((k, i, a) => ['tasi','aramco','spx','btc','gold','silver','xrp'].includes(k) && a.indexOf(k) === i).slice(0, 4)),
   mkStyle: _Q.get('mkstyle') === 'prices' ? 'prices' : 'arrows',
   // the national days (23 September, 22 February): #national=auto (the default) or off
@@ -1697,8 +1697,14 @@ const PRICES = CONFIG.mkStyle === 'prices';
 
 // the default list with arrows is the markup in the page; anything else is made here, before the saved copy is put back
 function buildMarkets(){
-  if(!PRICES && TICKERS.map(t => t.key).join() === 'tasi,spx,btc') return;
   const mk = document.querySelector('.mk');
+  if(!TICKERS.length){   // #markets=none: the weather alone at the top left, without the rule under it
+    mk.style.display = 'none';
+    const rule = document.querySelector('.markets .rule.l');
+    if(rule) rule.style.display = 'none';
+    return;
+  }
+  if(!PRICES && TICKERS.map(t => t.key).join() === 'tasi,spx,btc') return;
   mk.className = 'mk' + (PRICES ? ' px' : '') + (PRICES && TICKERS.length > 2 ? ' g' : '');
   mk.innerHTML = TICKERS.map(t => `<span class="m"><span>${esc(t.name)}</span>`
     + (PRICES ? `<span class="px" id="${t.px}"${t.unit ? ` data-u="${t.unit}"` : ''} hidden></span>` : '')
@@ -1769,7 +1775,7 @@ function countdownDays(){
 function slotNow(){
   if(CONFIG.slot === 'none') return 'none';
   if(CONFIG.slot === 'countdown' && countdownDays() !== null) return 'countdown';
-  if(CONFIG.slot === 'markets') return 'markets';
+  if(CONFIG.slot === 'markets' && TICKERS.length) return 'markets';
   return CONFIG.slot === 'fasting' ? 'fasting' : SLOT_MATCHES ? 'matches' : 'weather';
 }
 const slotBlock = (big, sub, when) => `<div class="mblock"><div class="big"><span>${big}</span></div>`

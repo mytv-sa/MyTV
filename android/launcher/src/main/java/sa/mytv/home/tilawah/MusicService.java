@@ -209,6 +209,7 @@ public class MusicService extends Service implements AudioManager.OnAudioFocusCh
         cat = Catalog.get(this);
         prefs = new Prefs(this);
         audio = (AudioManager) getSystemService(AUDIO_SERVICE);
+        volumeLeftOver();
         createChannel();
         session = new MediaSession(this, "mytv-tilawah");
         session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
@@ -390,15 +391,38 @@ public class MusicService extends Service implements AudioManager.OnAudioFocusCh
     private void adhanVolumeUp() {
         if (audio == null) return;
         int max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        if (savedVolume < 0) savedVolume = audio.getStreamVolume(AudioManager.STREAM_MUSIC);   // the TV's own, put back at the end
+        if (savedVolume < 0) {   // the TV's own, put back at the end; kept on disk too, in case Android ends this service first
+            savedVolume = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
+            prefs.setSavedVolume(savedVolume);
+        }
         int want = Math.round(max * prefs.adhanVolume() / 100f);
         audio.setStreamVolume(AudioManager.STREAM_MUSIC, Math.max(1, Math.min(max, want)), 0);
+        handler.removeCallbacks(volumeGuard);
+        handler.postDelayed(volumeGuard, VOLUME_GUARD_MS);
     }
 
     private void adhanVolumeBack() {
+        handler.removeCallbacks(volumeGuard);
         if (savedVolume < 0) return;
         if (audio != null) audio.setStreamVolume(AudioManager.STREAM_MUSIC, savedVolume, 0);
         savedVolume = -1;
+        prefs.setSavedVolume(-1);
+    }
+
+    /** No adhan is longer than 5 minutes (a person's own file is cut there): after 6 the TV's volume comes back whatever happened. */
+    static final long VOLUME_GUARD_MS = 6 * 60 * 1000L;
+    private final Runnable volumeGuard = new Runnable() {
+        @Override public void run() {
+            if (source == Prefs.SOURCE_ADHAN) finishAdhan(); else adhanVolumeBack();
+        }
+    };
+
+    /** A volume left on disk by an adhan that never ended here (Android stopped this service in the middle): put it back now. */
+    private void volumeLeftOver() {
+        int v = prefs.savedVolume();
+        if (v < 0 || audio == null) return;
+        audio.setStreamVolume(AudioManager.STREAM_MUSIC, v, 0);
+        prefs.setSavedVolume(-1);
     }
 
     private void startUrl(String url) {
@@ -535,6 +559,7 @@ public class MusicService extends Service implements AudioManager.OnAudioFocusCh
     }
 
     void pause() {
+        if (source == Prefs.SOURCE_ADHAN) { finishAdhan(); return; }   // a paused adhan would keep the TV at its volume
         if (player != null && playing) {
             player.pause();
             playing = false;
@@ -658,6 +683,12 @@ public class MusicService extends Service implements AudioManager.OnAudioFocusCh
     }
 
     @Override public void onAudioFocusChange(int change) {
+        if ((change == AudioManager.AUDIOFOCUS_LOSS || change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) && source == Prefs.SOURCE_ADHAN) {
+            // another app takes the sound during the adhan: it ends here, and the TV's own volume comes back for that app
+            resumeAfterAdhan = false;
+            stopPlayback();
+            return;
+        }
         if (change == AudioManager.AUDIOFOCUS_LOSS || change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
             if (player != null && playing) {
                 player.pause();

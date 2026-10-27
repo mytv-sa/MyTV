@@ -90,8 +90,9 @@ public class MainActivity extends Activity {
             } else if (row.kind == KIND_PRAYER) {
                 MusicService.adhan(this, prefs.playVoice(this), Adhan.name(prefs.playVoice(this)), 0);
                 openPlayer();
-            } else if (row.kind == KIND_ADHAN_TOGGLE) {
-                prefs.setAdhanOn(!prefs.adhanOn());
+            } else if (row.kind == KIND_ADHAN_TOGGLE) {   // OK goes round: off → the card → the sound → off
+                String m = prefs.adhanMode();
+                prefs.setAdhanMode(Prefs.MODE_OFF.equals(m) ? Prefs.MODE_POPUP : Prefs.MODE_POPUP.equals(m) ? Prefs.MODE_SOUND : Prefs.MODE_OFF);
                 AdhanScheduler.schedule(this);
                 adapter.rebuild();
                 focusList(list.getSelectedItemPosition());
@@ -351,7 +352,9 @@ public class MainActivity extends Activity {
                     if (isNext) detail += "  •  " + PrayerTimes.remaining(next.at - System.currentTimeMillis());
                     rows.add(new Row(false, KIND_PRAYER, PrayerTimes.NAMES[prayer], detail, prayer, isNext));
                 }
-                String toggle = prefs.adhanOn() ? getString(R.string.adhan_on) : getString(R.string.adhan_off);
+                String mode = prefs.adhanMode();
+                String toggle = getString(Prefs.MODE_SOUND.equals(mode) ? R.string.adhan_on
+                        : Prefs.MODE_POPUP.equals(mode) ? R.string.adhan_popup : R.string.adhan_off);
                 if (prefs.adhanOn() && next != null) {
                     toggle += "  •  " + next.name() + " " + PrayerTimes.remaining(next.at - System.currentTimeMillis());
                 }

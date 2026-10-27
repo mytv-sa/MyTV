@@ -20,8 +20,9 @@ import java.util.Locale;
 import sa.mytv.home.tilawah.DayParts;
 
 /**
- * The greeting above the home screen's clock («صباح الخير» from Fajr to Dhuhr, «طاب يومك» to Asr, «مساء الخير» to Isha,
- * «تصبح على خير» after) and under it the weather of the screensaver's city and the next sunrise or sunset.
+ * The greeting above the home screen's clock («صباح الخير» from Fajr to Dhuhr, «طابت أيامكم» to Asr, «مساء الخير» to Isha,
+ * «تصبحون على خير» after; the two in the middle can start later or be off, and a word of the person's can follow) and under
+ * it the weather of the screensaver's city and the next sunrise or sunset.
  *
  * Settings come from the screensaver's ConfigProvider (city, digits and «التحية والطقس»). The weather is asked of
  * Open-Meteo at most once every 30 minutes (the current temperature and weather code, and the air's dust as the screensaver's page asks it: two requests), and only while the greeting is on; the last answer is kept, so a TV that
@@ -46,15 +47,22 @@ final class Greeting {
     /** Called with the clock (every minute, and on resume). hour: the TV's hour, for the plain greeting. */
     void update(int hour, ConfigSnapshot snap) {
         Config s = Config.of(snap);
+        String plain = hour < 4 ? GreetingText.greeting(GreetingText.NIGHT) : hour < 12 ? "صباح الخير" : "مساء الخير";
         if (!s.on) {
-            greeting.setText(hour < 4 ? "تصبح على خير" : hour < 12 ? "صباح الخير" : "مساء الخير");
+            greeting.setText(GreetingText.withWord(plain, snap.greetWord));
             weather.setVisibility(android.view.View.GONE);
             return;
         }
         DayParts d = null;
         try { d = DayParts.now(context, snap.fragment); } catch (RuntimeException ignored) { }
-        greeting.setText(d == null ? (hour < 4 ? "تصبح على خير" : hour < 12 ? "صباح الخير" : "مساء الخير")
-                : GreetingText.greeting(GreetingText.part(System.currentTimeMillis(), d.fajr, d.dhuhr, d.asr, d.isha)));
+        if (d == null) {
+            greeting.setText(GreetingText.withWord(plain, snap.greetWord));
+        } else {
+            long now = System.currentTimeMillis(), midnight = cityMidnight(s.tz, now);
+            greeting.setText(GreetingText.withWord(GreetingText.greeting(GreetingText.part(now, d.fajr, d.dhuhr, d.asr, d.isha,
+                    GreetingText.start(snap.greetDay, d.dhuhr, midnight), GreetingText.start(snap.greetNight, d.isha, midnight))),
+                    snap.greetWord));
+        }
 
         SharedPreferences sp = prefs();
         long at = sp.getLong("at", 0);
@@ -139,6 +147,17 @@ final class Greeting {
 
     private SharedPreferences prefs() {
         return context.getSharedPreferences("greeting", Context.MODE_PRIVATE);
+    }
+
+    /** 00:00 of today in the city, for the greetings that start at an hour of its day */
+    private static long cityMidnight(String tz, long now) {
+        java.util.Calendar c = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone(tz), Locale.US);
+        c.setTimeInMillis(now);
+        c.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        c.set(java.util.Calendar.MINUTE, 0);
+        c.set(java.util.Calendar.SECOND, 0);
+        c.set(java.util.Calendar.MILLISECOND, 0);
+        return c.getTimeInMillis();
     }
 
     /** The screensaver's settings this line needs. */

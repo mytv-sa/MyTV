@@ -16,6 +16,9 @@
 #   optimize/saver.sh home-card verse,hourly,year  on the home screen (launcher): up to 3 cards, same choices, in this order
 #                                                  (one value works too; none = off). Two sit side by side, a third under them
 #   optimize/saver.sh greeting off                 home screen: the greeting (by prayer time) and the weather line under it: on (default) or off
+#   optimize/saver.sh greeting-word 'عائلتي'       home screen: a word after the greeting («صباح الخير عائلتي»), up to 11 characters with the spaces; off hides it
+#   optimize/saver.sh greeting-day 14              home screen: «طابت أيامكم» from dhuhr (default) 13 14 15, or off (صباح الخير goes on until Asr)
+#   optimize/saver.sh greeting-night 22            home screen: «تصبحون على خير» from isha (default) 21 22 23 0 (midnight), or off (مساء الخير until Fajr)
 #   optimize/saver.sh adhanbar off                 the slim bar before the adhan (last 10 minutes, then until the iqama) on the screensaver and the home screen: on (default) or off
 #   optimize/saver.sh yearstrip on                 the slim year strip under the screensaver's clock (365 dots in 7 rows, today lit, no words): on or off (default)
 #   optimize/saver.sh genres Drama,Comedy          episodes card: Drama Comedy Action Crime Thriller Mystery
@@ -30,7 +33,7 @@
 #   optimize/saver.sh cardstyle glass1             look of the card beside the clock: current dark1 glass1 dark3 glass3
 #   optimize/saver.sh national off                 the quiet green look on National Day (21-25 Sep) and Founding Day (20-24 Feb): auto (default) or off
 #   optimize/saver.sh digits latin                 numbers: hindi = ١٢٣ (default), latin = 123
-#   optimize/saver.sh markets tasi,gold,btc        top left, up to 4 in order: tasi aramco spx btc gold silver xrp (default tasi,spx,btc)
+#   optimize/saver.sh markets tasi,gold,btc        top left, up to 4 in order: tasi aramco spx btc gold silver xrp (default tasi,spx,btc); none = no markets
 #   optimize/saver.sh mkstyle prices               markets: arrows (▲▼ only, default) or prices (price and day's change)
 #   optimize/saver.sh stocks 2222 1120 AAPL        watchlist of the stocks card (card stocks): up to 8 Tadawul codes (4 digits) or US tickers
 #   optimize/saver.sh tasks list                   «المهام» kept on the TV; N = the number list shows
@@ -140,6 +143,9 @@ case "${1:-}" in
   card)     set1 panel "${2:?usage: optimize/saver.sh card prayers}" ;;
   home-card)set1 home_panel "${2?usage: optimize/saver.sh home-card verse,hourly,year | none}" ;;
   greeting) set1 greeting "${2:?usage: optimize/saver.sh greeting on|off}" ;;
+  greeting-word)  set1 greetword "${2:?usage: optimize/saver.sh greeting-word 'عائلتي' | off}" ;;
+  greeting-day)   set1 greetday "${2:?usage: optimize/saver.sh greeting-day off|dhuhr|13|14|15}" ;;
+  greeting-night) set1 greetnight "${2:?usage: optimize/saver.sh greeting-night off|isha|21|22|23|0}" ;;
   adhanbar) set1 adhanbar "${2:?usage: optimize/saver.sh adhanbar on|off}" ;;
   yearstrip)set1 yearstrip "${2:?usage: optimize/saver.sh yearstrip on|off}" ;;
   genres)   set1 genres "${2-}" ;;

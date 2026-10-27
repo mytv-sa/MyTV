@@ -50,8 +50,10 @@ public class ConfigProvider extends ContentProvider {
         }
         // home_panel: the first card alone (what an older launcher reads); home_panels: all of them, "a,b,c" or "none"
         List<String> cards = p.homePanels();
-        MatrixCursor c = new MatrixCursor(new String[] {"fragment", "home_panel", "greeting", "home_panels", "adhan_bar"});
-        c.addRow(new Object[] {p.fragment(), cards.isEmpty() ? "none" : cards.get(0), p.greeting() ? "1" : "0", p.homePanel(), p.adhanBar() ? "1" : "0"});
+        MatrixCursor c = new MatrixCursor(new String[] {"fragment", "home_panel", "greeting", "home_panels", "adhan_bar",
+            "greet_word", "greet_day", "greet_night"});
+        c.addRow(new Object[] {p.fragment(), cards.isEmpty() ? "none" : cards.get(0), p.greeting() ? "1" : "0", p.homePanel(), p.adhanBar() ? "1" : "0",
+            p.greetWordShown(), p.greetDay(), p.greetNight()});
         return c;
     }
 

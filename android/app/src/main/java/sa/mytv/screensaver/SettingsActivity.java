@@ -100,7 +100,13 @@ public class SettingsActivity extends Activity {
         render();
     }
 
+    /**
+     * Builds the list again with what is set now. The row that had the focus (by its name, without the count in brackets) gets it
+     * back: rebuilding used to send the focus to the first row, so a change looked as if it had not been kept.
+     */
     private void render() {
+        View had = getCurrentFocus();
+        Object keep = had != null && list.indexOfChild(had) >= 0 ? had.getTag() : null;
         latinDigits = DigitsText.isLatin(prefs.digits());
         list.removeAllViews();
         LinearLayout head = new LinearLayout(this);
@@ -114,7 +120,7 @@ public class SettingsActivity extends Activity {
         title.setTypeface(font("ThmanyahDisplay-Bold"));
         head.addView(title);
         TextView sub = new TextView(this);
-        sub.setText("إعدادات شاشة التوقف");
+        sub.setText("إعدادات الواجهة الرئيسية وشاشة التوقف");
         sub.setTextColor(0xFFC6BBA4);
         sub.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
         sub.setTypeface(font("Thmanyah-Regular"));
@@ -123,9 +129,11 @@ public class SettingsActivity extends Activity {
         head.addView(sub, sp0);
         list.addView(head);
 
-        row("معاينة الشاشة", "شاهد الشاشة الآن", R.drawable.ic_play, new Runnable() { public void run() {
-            startActivity(new Intent(SettingsActivity.this, MainActivity.class)); } }).requestFocus();
+        View first = row("معاينة شاشة التوقف", "شاهد شاشة التوقف الآن", R.drawable.ic_play, new Runnable() { public void run() {
+            startActivity(new Intent(SettingsActivity.this, MainActivity.class)); } });
 
+        // ===== 1. what both screens use
+        group("عام", "للواجهة الرئيسية وشاشة التوقف معًا");
         header("الموقع");
         row("المدينة", prefs.city()[0], R.drawable.ic_place, new Runnable() { public void run() { pickCity(); } });
 
@@ -139,48 +147,24 @@ public class SettingsActivity extends Activity {
         row("رياضات أخرى", labels(Prefs.EVENTS, prefs.list("events"), "بدون"), R.drawable.ic_trophy,
             new Runnable() { public void run() { pickMany("events", "رياضات أخرى", Prefs.EVENTS, "بدون اختيار = بدون"); } });
 
-        header("العرض");
-        noConv = true;
-        row("الأرقام", Prefs.digitsLabel(prefs.digits()), R.drawable.ic_language,
-            new Runnable() { public void run() { pickDigits(); } });
-        noConv = false;
+        header("الصلاة");
         row("تنبيه قبل الأذان", prefs.adhanBar() ? "يعمل · شريط في أعلى الشاشة آخر ١٠ دقائق، ثم حتى الإقامة" : "متوقف", R.drawable.ic_eye,
             new Runnable() { public void run() { prefs.setAdhanBar(!prefs.adhanBar()); render(); } });
         row("تعديل وقت الصلاة", prefs.prayerAdjOn() ? "يعمل · لكل صلاة دقائقها، من −٢٠ إلى +٢٠ (الشروق لا يتغيّر)" : "متوقف · الأوقات كما تُحسب", R.drawable.ic_eye,
             new Runnable() { public void run() { prefs.setPrayerAdjOn(!prefs.prayerAdjOn()); render(); } });
         if (prefs.prayerAdjOn()) for (int k = 0; k < PrayerAdj.COUNT; k++) adjRow(k);
-        row("شريط السنة تحت الساعة", prefs.yearStrip() ? "يعمل · نقاط السنة تحت الساعة، واليوم يلمع" : "متوقف", R.drawable.ic_eye,
-            new Runnable() { public void run() { prefs.setYearStrip(!prefs.yearStrip()); render(); } });
+
+        header("العرض");
+        noConv = true;
+        row("الأرقام", Prefs.digitsLabel(prefs.digits()), R.drawable.ic_language,
+            new Runnable() { public void run() { pickDigits(); } });
+        noConv = false;
+        row("شكل البطاقات", Prefs.cardStyleLabel(prefs.cardStyle()), R.drawable.ic_eye,
+            new Runnable() { public void run() { pickCardStyle(); } });
         row("المناسبات الوطنية", Prefs.nationalLabel(prefs.national()), R.drawable.ic_eye,
             new Runnable() { public void run() { pickNational(); } });
-        row("الخانة اليسرى", Prefs.slotLabel(prefs.slot()), R.drawable.ic_eye,
-            new Runnable() { public void run() { pickSlot(); } });
-        if ("countdown".equals(prefs.slot()) || !prefs.countdownDate().isEmpty())
-            row("العدّ التنازلي", countdownLabel(), R.drawable.ic_eye,
-                new Runnable() { public void run() { manageCountdown(); } });
-
-        header("الأسواق (أعلى اليسار)");
-        row("الأسواق (" + arabicNum(prefs.markets().size()) + "/" + arabicNum(Prefs.MAX_MARKETS) + ")", marketsLabel(),
-            R.drawable.ic_trophy, new Runnable() { public void run() { pickMarkets(); } });
-        row("عرض الأسواق", Prefs.mkStyleLabel(prefs.mkStyle()), R.drawable.ic_eye,
-            new Runnable() { public void run() { pickMkStyle(); } });
-
-        header("بجانب الساعة");
-        row("المحتوى", Prefs.panelLabel(prefs.panel()), R.drawable.ic_eye, new Runnable() { public void run() { pickPanel(-1); } });
-        row("شكل البطاقة", Prefs.cardStyleLabel(prefs.cardStyle()), R.drawable.ic_eye,
-            new Runnable() { public void run() { pickCardStyle(); } });
-
-        header("الشاشة الرئيسية (تلفزيوني)");
-        // up to three cards left of the clock; each place takes any card, or «بدون» (the ones after it move up)
-        for (int k = 0; k < Prefs.HOME_CARDS; k++) {
-            final int place = k;
-            row(HOME_CARD_NAMES[k], Prefs.panelLabel(prefs.homePanelAt(k), "بدون"), R.drawable.ic_eye,
-                new Runnable() { public void run() { pickPanel(place); } });
-        }
-        row("التحية والطقس", prefs.greeting() ? "تعمل" : "متوقفة", R.drawable.ic_eye,
-            new Runnable() { public void run() { prefs.setGreeting(!prefs.greeting()); render(); } });
-        row("ترتيب التطبيقات المفضلة", "قائمة ترتّب فيها المفضلة بالأسهم", R.drawable.ic_star,
-            new Runnable() { public void run() { openDockSettings(); } });
+        row("صوري (" + arabicNum(Own.count(this)) + "/" + arabicNum(Own.MAX) + ")", ownLabel(), R.drawable.ic_eye,
+            new Runnable() { public void run() { pickOwn(); } });
 
         if ("shows".equals(prefs.panel()) || prefs.homePanels().contains("shows")) {   // only matter for the shows card
         header("جديد المسلسلات");
@@ -199,19 +183,100 @@ public class SettingsActivity extends Activity {
             R.drawable.ic_star, new Runnable() { public void run() { askStocks(); } });
         }
 
+        // ===== 2. the home screen alone
+        group("الواجهة الرئيسية", "ما يظهر عند تشغيل التلفزيون وزر Home");
+        header("البطاقات");
+        // up to three cards left of the clock; each place takes any card, or «بدون» (the ones after it move up)
+        for (int k = 0; k < Prefs.HOME_CARDS; k++) {
+            final int place = k;
+            row(HOME_CARD_NAMES[k], Prefs.panelLabel(prefs.homePanelAt(k), "بدون"), R.drawable.ic_eye,
+                new Runnable() { public void run() { pickPanel(place); } });
+        }
+        header("الترحيب");
+        row("التحية والطقس", prefs.greeting() ? "تعمل" : "متوقفة", R.drawable.ic_eye,
+            new Runnable() { public void run() { prefs.setGreeting(!prefs.greeting()); render(); } });
+        row("كلمة بعد الترحيب", prefs.greetWordOn() ? "تعمل · «صباح الخير " + prefs.greetWord() + "»" : "متوقفة", R.drawable.ic_eye,
+            new Runnable() { public void run() {
+                if (!prefs.greetWordOn() && prefs.greetWord().isEmpty()) askGreetWord();   // nothing to show yet: ask for it first
+                else { prefs.setGreetWordOn(!prefs.greetWordOn()); render(); } } });
+        if (prefs.greetWordOn())
+            row("نص الكلمة", prefs.greetWord() + "  ·  حتى " + arabicNum(Prefs.GREET_WORD_MAX) + " حرفًا", R.drawable.ic_language,
+                new Runnable() { public void run() { askGreetWord(); } });
+        row("«طابت أيامكم»", prefs.greetDayOn() ? "تعمل · حتى العصر" : "متوقفة · «صباح الخير» حتى العصر", R.drawable.ic_eye,
+            new Runnable() { public void run() { prefs.setGreetDayOn(!prefs.greetDayOn()); render(); } });
+        if (prefs.greetDayOn())
+            row("بداية «طابت أيامكم»", Prefs.startLabel(Prefs.GREET_DAY_STARTS, prefs.greetDayStart()), R.drawable.ic_sync,
+                new Runnable() { public void run() { pickGreetStart(true); } });
+        row("«تصبحون على خير»", prefs.greetNightOn() ? "تعمل · حتى الفجر" : "متوقفة · «مساء الخير» حتى الفجر", R.drawable.ic_eye,
+            new Runnable() { public void run() { prefs.setGreetNightOn(!prefs.greetNightOn()); render(); } });
+        if (prefs.greetNightOn())
+            row("بداية «تصبحون على خير»", Prefs.startLabel(Prefs.GREET_NIGHT_STARTS, prefs.greetNightStart()), R.drawable.ic_sync,
+                new Runnable() { public void run() { pickGreetStart(false); } });
+        header("التطبيقات");
+        row("ترتيب التطبيقات المفضلة", "قائمة ترتّب فيها المفضلة بالأسهم", R.drawable.ic_star,
+            new Runnable() { public void run() { openDockSettings(); } });
+
+        // ===== 3. the screensaver alone
+        group("شاشة التوقف", "ما يظهر بعد ترك التلفزيون بلا استخدام");
+        header("بجانب الساعة");
+        row("المحتوى", Prefs.panelLabel(prefs.panel()), R.drawable.ic_eye, new Runnable() { public void run() { pickPanel(-1); } });
+        row("شريط السنة تحت الساعة", prefs.yearStrip() ? "يعمل · نقاط السنة تحت الساعة، واليوم يلمع" : "متوقف", R.drawable.ic_eye,
+            new Runnable() { public void run() { prefs.setYearStrip(!prefs.yearStrip()); render(); } });
+        header("الخانة اليسرى");
+        row("الخانة اليسرى", Prefs.slotLabel(prefs.slot()), R.drawable.ic_eye,
+            new Runnable() { public void run() { pickSlot(); } });
+        if ("countdown".equals(prefs.slot()) || !prefs.countdownDate().isEmpty())
+            row("العدّ التنازلي", countdownLabel(), R.drawable.ic_eye,
+                new Runnable() { public void run() { manageCountdown(); } });
+        header("الأسواق (أعلى اليسار)");
+        row("الأسواق (" + arabicNum(prefs.markets().size()) + "/" + arabicNum(Prefs.MAX_MARKETS) + ")", marketsLabel(),
+            R.drawable.ic_trophy, new Runnable() { public void run() { pickMarkets(); } });
+        if (!prefs.markets().isEmpty())
+            row("عرض الأسواق", Prefs.mkStyleLabel(prefs.mkStyle()), R.drawable.ic_eye,
+                new Runnable() { public void run() { pickMkStyle(); } });
         header("التوقيت");
         row("تبديل الصورة كل", minutesLabel(Integer.parseInt(prefs.photoMinutes())), R.drawable.ic_sync,
             new Runnable() { public void run() { pickPhotoMinutes(); } });
-        row("صوري (" + arabicNum(Own.count(this)) + "/" + arabicNum(Own.MAX) + ")", ownLabel(), R.drawable.ic_eye,
-            new Runnable() { public void run() { pickOwn(); } });
         row("بدء شاشة التوقف بعد", idleLabel(), R.drawable.ic_screensaver,
             new Runnable() { public void run() { pickIdle(); } });
 
-        header("التطبيق");
+        group("التطبيق", null);
         row("التحديث التلقائي للصفحة", prefs.autoUpdate() ? "يعمل · عند بدء الشاشة، كل ٦ ساعات" : "متوقف", R.drawable.ic_sync, new Runnable() { public void run() {
             prefs.setAutoUpdate(!prefs.autoUpdate()); render(); } });
         View last = row("تحديث الشاشة الآن", "ينزّل أحدث نسخة من الشاشة", R.drawable.ic_sync, new Runnable() { public void run() { updateNow(); } });
         note(last, Updater.versionLines(this));
+
+        View back = null;
+        if (keep != null) for (int i = 0; i < list.getChildCount() && back == null; i++)
+            if (keep.equals(list.getChildAt(i).getTag())) back = list.getChildAt(i);
+        (back != null ? back : first).requestFocus();
+    }
+
+    /** One of the three parts of the list: its name large, and under it which screen it is for. */
+    private void group(String name, String forWhat) {
+        LinearLayout g = new LinearLayout(this);
+        g.setOrientation(LinearLayout.VERTICAL);
+        g.setPadding(dp(10), dp(34), dp(10), dp(4));
+        TextView t = new TextView(this);
+        t.setText(name);
+        t.setTextColor(0xFFF6EFE0);
+        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28);
+        t.setTypeface(font("ThmanyahDisplay-Bold"));
+        g.addView(t);
+        if (forWhat != null) {
+            TextView s = new TextView(this);
+            s.setText(forWhat);
+            s.setTextColor(0xFFC6BBA4);
+            s.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+            s.setTypeface(font("Thmanyah-Regular"));
+            g.addView(s);
+        }
+        View line = new View(this);
+        line.setBackgroundColor(0x66D6AF6B);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(1));
+        lp.topMargin = dp(10);
+        g.addView(line, lp);
+        list.addView(g);
     }
 
     // ---------- pickers ----------
@@ -647,28 +712,69 @@ public class SettingsActivity extends Activity {
     private String marketsLabel() {
         List<String> out = new ArrayList<>();
         for (String k : prefs.markets()) out.add(labelOf(Prefs.MARKETS, k));
-        return Prefs.join(out, "، ");
+        return out.isEmpty() ? "بدون · لا يظهر سطر الأسواق" : Prefs.join(out, "، ");
     }
 
-    /** Up to MAX_MARKETS; the order they are shown in is the order of the list. */
+    /** Up to MAX_MARKETS, or none at all (the line goes); the order they are shown in is the order of the list. */
     private void pickMarkets() {
         List<String> cur = prefs.markets();
         String[] labels = new String[Prefs.MARKETS.length];
         final boolean[] on = new boolean[Prefs.MARKETS.length];
         for (int i = 0; i < labels.length; i++) { labels[i] = Prefs.MARKETS[i][1]; on[i] = cur.contains(Prefs.MARKETS[i][0]); }
-        new Dlg(this).setTitle("الأسواق (حتى " + arabicNum(Prefs.MAX_MARKETS) + ")")
+        new Dlg(this).setTitle("الأسواق (حتى " + arabicNum(Prefs.MAX_MARKETS) + "، أو بدون)")
             .setMultiChoiceItems(labels, on, (d, i, checked) -> on[i] = checked)
             .setPositiveButton("حفظ", (d, w) -> {
                 List<String> v = new ArrayList<>();
                 for (int i = 0; i < on.length; i++) if (on[i]) v.add(Prefs.MARKETS[i][0]);
-                if (v.isEmpty() || v.size() > Prefs.MAX_MARKETS) {
-                    toast("اختر من سوق إلى " + arabicNum(Prefs.MAX_MARKETS) + " أسواق");
+                if (v.size() > Prefs.MAX_MARKETS) {
+                    toast("الحد " + arabicNum(Prefs.MAX_MARKETS) + " أسواق");
                     return;
                 }
                 prefs.setMarkets(v);
                 render();
             })
             .setNegativeButton("إلغاء", null).show();
+    }
+
+    /** «صباح الخير عائلتي»: the word after the home screen's greeting, up to Prefs.GREET_WORD_MAX characters with the spaces. */
+    private void askGreetWord() {
+        final EditText in = new EditText(this);
+        in.setHint("مثال: عائلتي");
+        in.setText(prefs.greetWord());
+        in.setSingleLine(true);
+        in.setInputType(InputType.TYPE_CLASS_TEXT);
+        in.setFilters(new android.text.InputFilter[] {new android.text.InputFilter.LengthFilter(Prefs.GREET_WORD_MAX)});
+        in.setSelection(in.getText().length());
+        new Dlg(this).setTitle("الكلمة بعد الترحيب (حتى " + arabicNum(Prefs.GREET_WORD_MAX) + " حرفًا مع المسافات)")
+            .setView(in)
+            .setPositiveButton("حفظ", (d, w) -> {
+                String v = in.getText().toString().trim();
+                String problem = Prefs.greetWordProblem(v);
+                if (problem != null) { toast(problem); return; }
+                prefs.setGreetWord(v);
+                prefs.setGreetWordOn(true);
+                render();
+            })
+            .setNegativeButton("إلغاء", null).show();
+        in.requestFocus();
+    }
+
+    /** when «طابت أيامكم» (day) or «تصبحون على خير» starts */
+    private void pickGreetStart(final boolean day) {
+        final String[][] all = day ? Prefs.GREET_DAY_STARTS : Prefs.GREET_NIGHT_STARTS;
+        String cur = day ? prefs.greetDayStart() : prefs.greetNightStart();
+        String[] labels = new String[all.length];
+        int sel = 0;
+        for (int i = 0; i < all.length; i++) {
+            labels[i] = all[i][1];
+            if (all[i][0].equals(cur)) sel = i;
+        }
+        new Dlg(this).setTitle(day ? "تبدأ «طابت أيامكم»" : "تبدأ «تصبحون على خير»")
+            .setSingleChoiceItems(labels, sel, (d, i) -> {
+                if (day) prefs.setGreetDayStart(all[i][0]); else prefs.setGreetNightStart(all[i][0]);
+                d.dismiss();
+                render();
+            }).show();
     }
 
     private String stocksLabel() { return Prefs.join(prefs.stocks(), "، "); }
@@ -1068,6 +1174,7 @@ public class SettingsActivity extends Activity {
         card.setPadding(dp(24), dp(14), dp(20), dp(14));
         card.setFocusable(true);
         card.setClickable(true);
+        card.setTag(label.split(" \\(")[0]);   // which row this is for render(): the name without its count «(٣/٤)»
         card.setBackgroundResource(R.drawable.glass_row);   // glass; the gold-tinted one while it has the focus
 
         final android.widget.ImageView ic = new android.widget.ImageView(this);

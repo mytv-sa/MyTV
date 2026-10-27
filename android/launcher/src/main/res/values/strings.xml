@@ -36,9 +36,10 @@
 
     <!-- the adhan section -->
     <string name="adhan">الأذان</string>
-    <string name="adhan_auto">الأذان التلقائي</string>
-    <string name="adhan_on">مفعّل</string>
+    <string name="adhan_auto">التنبيه وقت الصلاة</string>
+    <string name="adhan_on">تنبيه صوتي · الأذان</string>
     <string name="adhan_off">متوقف</string>
+    <string name="adhan_popup">تنبيه بإشعار · بطاقة بلا صوت ٤٠ ثانية</string>
     <string name="adhan_voice">المؤذن</string>
     <string name="adhan_voices">اختر المؤذن</string>
     <string name="adhan_volume">صوت الأذان</string>

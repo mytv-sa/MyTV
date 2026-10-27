@@ -20,7 +20,7 @@ import java.util.Locale;
  *   am broadcast -n sa.mytv.screensaver/.SaverReceiver -a sa.mytv.screensaver.CITIES
  *   am broadcast -n sa.mytv.screensaver/.SaverReceiver -a sa.mytv.screensaver.SET
  *       [--es city 'الرس'] [--es lat 25.86 --es lon 43.49 --es tz Asia/Kuwait]   (tz is needed for a place that is not in the list) [--es teams '136013:Al-Hilal,150643:Al-Zulfi']
- *       [--es panel prayers] [--es home_panel prayers,hourly,verse|none] [--es greeting on|off] [--es adhanbar on|off] [--es yearstrip on|off] [--es minrating 7] [--es genres Drama,Comedy] [--es langs English]
+ *       [--es panel prayers] [--es home_panel prayers,hourly,verse|none] [--es greeting on|off] [--es greetword 'عائلتي'|off] [--es greetday off|dhuhr|13|14|15] [--es greetnight off|isha|21|22|23|0] [--es adhanbar on|off] [--es yearstrip on|off] [--es minrating 7] [--es genres Drama,Comedy] [--es langs English]
  *       [--es photos 30] [--es idle 10] [--es digits hindi|latin]
  *       [--es cardstyle current|dark1|glass1|dark3|glass3] [--es national auto|off]
  *       [--es markets tasi,gold,btc] [--es mkstyle arrows|prices] [--es stocks 2222,1120,AAPL]
@@ -39,6 +39,8 @@ import java.util.Locale;
  * through ConfigProvider (.../own-in), or, with path, one in /data/local/tmp/mytv-own/ (only where the app may read it);
  * mode = mix (they join ours, as always) or only.
  * greeting = the greeting and the weather line above the home screen's clock (on, the default, or off: the plain good-morning).
+ * greetword = a word after it («صباح الخير عائلتي», up to 11 characters with the spaces) or off; greetday / greetnight = when
+ * «طابت أيامكم» / «تصبحون على خير» start (Prefs.GREET_DAY_STARTS / GREET_NIGHT_STARTS) or off (the greeting before goes on).
  * yearstrip = the slim year strip under the screensaver's clock (on, or off, the default).
  * slot = what the bottom-left slot shows (Prefs.SLOTS). countdown = the date (YYYY-MM-DD) slot=countdown counts down to, or
  * "clear"; cdname = its name (up to 40 characters).
@@ -186,6 +188,16 @@ public class SaverReceiver extends BroadcastReceiver {
         String greeting = i.getStringExtra("greeting");
         if (greeting != null && !"on".equals(greeting) && !"off".equals(greeting))
             return "error: greeting is one of on off";
+        String greetWord = i.getStringExtra("greetword");
+        if (greetWord != null) greetWord = greetWord.trim();
+        if (greetWord != null && !"off".equals(greetWord) && Prefs.greetWordProblem(greetWord) != null)
+            return "error: greetword is off or a word of 1 to " + Prefs.GREET_WORD_MAX + " characters (spaces count), no | in it";
+        String greetDay = i.getStringExtra("greetday");
+        if (greetDay != null && !"off".equals(greetDay) && !isChoice(Prefs.GREET_DAY_STARTS, greetDay))
+            return "error: greetday is off or one of " + choices(Prefs.GREET_DAY_STARTS);
+        String greetNight = i.getStringExtra("greetnight");
+        if (greetNight != null && !"off".equals(greetNight) && !isChoice(Prefs.GREET_NIGHT_STARTS, greetNight))
+            return "error: greetnight is off or one of " + choices(Prefs.GREET_NIGHT_STARTS);
         String rating = i.getStringExtra("minrating");
         if (rating != null && !Arrays.asList(Prefs.MIN_RATINGS).contains(rating))
             return "error: minrating is one of " + Prefs.join(Arrays.asList(Prefs.MIN_RATINGS), " ");
@@ -204,11 +216,12 @@ public class SaverReceiver extends BroadcastReceiver {
         String mkStyle = i.getStringExtra("mkstyle");
         if (mkStyle != null && !isChoice(Prefs.MK_STYLES, mkStyle))
             return "error: mkstyle is one of " + choices(Prefs.MK_STYLES);
-        List<String> markets = codes(i.getStringExtra("markets"), Prefs.MARKETS);
-        if (markets != null) {
-            if (markets.contains(null)) return "error: markets are " + names(Prefs.MARKETS);
+        List<String> markets = "none".equals(i.getStringExtra("markets")) ? new ArrayList<>()   // none: no markets line
+            : codes(i.getStringExtra("markets"), Prefs.MARKETS);
+        if (markets != null && !"none".equals(i.getStringExtra("markets"))) {
+            if (markets.contains(null)) return "error: markets are " + names(Prefs.MARKETS) + ", or none";
             if (markets.isEmpty() || markets.size() > Prefs.MAX_MARKETS || new java.util.HashSet<>(markets).size() != markets.size())
-                return "error: markets is 1 to " + Prefs.MAX_MARKETS + " different ones of " + names(Prefs.MARKETS);
+                return "error: markets is 1 to " + Prefs.MAX_MARKETS + " different ones of " + names(Prefs.MARKETS) + ", or none";
         }
         List<String> stocks = null;
         if (i.getStringExtra("stocks") != null) {
@@ -270,6 +283,18 @@ public class SaverReceiver extends BroadcastReceiver {
         if (panel != null) p.setPanel(panel);
         if (homeCards != null) p.setHomePanels(homeCards);
         if (greeting != null) p.setGreeting("on".equals(greeting));
+        if (greetWord != null) {
+            p.setGreetWordOn(!"off".equals(greetWord));
+            if (!"off".equals(greetWord)) p.setGreetWord(greetWord);
+        }
+        if (greetDay != null) {
+            p.setGreetDayOn(!"off".equals(greetDay));
+            if (!"off".equals(greetDay)) p.setGreetDayStart(greetDay);
+        }
+        if (greetNight != null) {
+            p.setGreetNightOn(!"off".equals(greetNight));
+            if (!"off".equals(greetNight)) p.setGreetNightStart(greetNight);
+        }
         if (adhanBar != null) p.setAdhanBar("on".equals(adhanBar));
         if (yearStrip != null) p.setYearStrip("on".equals(yearStrip));
         if (adj != null) p.setPrayerAdj(adj);
@@ -387,6 +412,8 @@ public class SaverReceiver extends BroadcastReceiver {
             + "\nteams: " + Prefs.join(p.teams(), ", ")
             + "\npanel: " + p.panel() + "\nhome_panel: " + p.homePanel()
             + "\ngreeting: " + (p.greeting() ? "on" : "off")
+            + "\ngreetword: " + (p.greetWordOn() ? p.greetWord() : "off" + (p.greetWord().isEmpty() ? "" : " (" + p.greetWord() + ")"))
+            + "\ngreetday: " + p.greetDay() + "\ngreetnight: " + p.greetNight()
             + "\nadhanbar: " + (p.adhanBar() ? "on" : "off")
             + "\nyearstrip: " + (p.yearStrip() ? "on" : "off")
             + "\nprayeradj: " + (p.prayerAdjOn() ? "on" : "off") + " " + PrayerAdj.describe(p.prayerAdj())
@@ -395,7 +422,7 @@ public class SaverReceiver extends BroadcastReceiver {
             + "\ndigits: " + p.digits()
             + "\nnational: " + p.national()
             + "\ncardstyle: " + p.cardStyle()
-            + "\nmarkets: " + Prefs.join(p.markets(), ",") + "\nmkstyle: " + p.mkStyle()
+            + "\nmarkets: " + (p.markets().isEmpty() ? "none" : Prefs.join(p.markets(), ",")) + "\nmkstyle: " + p.mkStyle()
             + "\nstocks: " + Prefs.join(p.stocks(), ",")
             + "\nslot: " + p.slot()
             + "\ncountdown: " + (p.countdownDate().isEmpty() ? "none" : p.countdownDate() + " " + p.countdownName())

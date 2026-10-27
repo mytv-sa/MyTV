@@ -275,12 +275,20 @@ public class MainActivity extends Activity {
         content.setClipToPadding(false);
         scroll.addView(content, new FrameLayout.LayoutParams(-1, -2));
 
-        // the slim bar before the adhan, over the home screen's top edge (the header starts 36 dp down)
-        adhanBar = text(12, "sans-serif-medium", 0xFFFFE9B8);
+        // «الأذان بعد ٨ دقائق»: a gold pill in the middle of the header's row, between the buttons and the clock. Not on the top
+        // edge: a TV crops a few percent of each edge (overscan), and the bar there was cut or gone.
+        adhanBar = text(14, "sans-serif-medium", 0xFFFFE9B8);
         adhanBar.setGravity(Gravity.CENTER);
-        adhanBar.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{0x00DCB86F, 0x57DCB86F, 0x57DCB86F, 0x00DCB86F}));
+        GradientDrawable pill = new GradientDrawable();
+        pill.setColor(0x66DCB86F);
+        pill.setCornerRadius(dp(16));
+        pill.setStroke(dp(1), 0x99DCB86F);
+        adhanBar.setBackground(pill);
+        adhanBar.setPadding(dp(22), 0, dp(22), 0);
         adhanBar.setVisibility(View.GONE);
-        root.addView(adhanBar, new FrameLayout.LayoutParams(-1, dp(26), Gravity.TOP));
+        FrameLayout.LayoutParams barLp = new FrameLayout.LayoutParams(-2, dp(32), Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        barLp.topMargin = dp(40);
+        root.addView(adhanBar, barLp);
 
         // Hero: exactly one screen tall, header on top, title + dock at the bottom.
         hero = new FrameLayout(this);

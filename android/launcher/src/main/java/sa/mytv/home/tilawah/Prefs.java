@@ -27,12 +27,29 @@ final class Prefs {
     // ---- the adhan ----
 
     /** Off until the user turns it on; there is a switch row for it in «تلاوة». */
-    boolean adhanOn() { return sp.getBoolean("adhan_on", false); }
-    void setAdhanOn(boolean on) { sp.edit().putBoolean("adhan_on", on).apply(); }
+    /**
+     * What the prayer time does: nothing, a silent card in the middle of the screen (AdhanPopup), or the adhan itself. A TV
+     * from before the choice kept only "adhan_on": on is the sound.
+     */
+    static final String MODE_OFF = "off", MODE_POPUP = "popup", MODE_SOUND = "sound";
+    String adhanMode() {
+        String m = sp.getString("adhan_mode", null);
+        if (MODE_OFF.equals(m) || MODE_POPUP.equals(m) || MODE_SOUND.equals(m)) return m;
+        return sp.getBoolean("adhan_on", false) ? MODE_SOUND : MODE_OFF;
+    }
+    void setAdhanMode(String m) {
+        sp.edit().putString("adhan_mode", m).putBoolean("adhan_on", !MODE_OFF.equals(m)).apply();
+    }
+    /** the prayer time does something (the alarm is needed): the card or the sound */
+    boolean adhanOn() { return !MODE_OFF.equals(adhanMode()); }
+    void setAdhanOn(boolean on) { setAdhanMode(on ? MODE_SOUND : MODE_OFF); }
 
     /** The adhan's own volume, in percent; the TV's volume comes back after it. */
     int adhanVolume() { int v = sp.getInt("adhan_volume", 30); return v < 10 || v > 100 ? 30 : v; }
     void setAdhanVolume(int percent) { sp.edit().putInt("adhan_volume", percent).apply(); }
+    /** the TV's own volume while an adhan plays at its level (-1: none); commit, so it is on disk before the volume changes */
+    int savedVolume() { return sp.getInt("adhan_saved_volume", -1); }
+    void setSavedVolume(int v) { sp.edit().putInt("adhan_saved_volume", v).commit(); }
 
     /** The voice number that stands for the person's own recording (OwnAdhan); the numbered ones are 1..21. */
     static final int OWN = 0;

@@ -6,8 +6,8 @@ import android.content.Intent;
 import android.os.PowerManager;
 
 /**
- * Plays the adhan when its alarm goes off — pausing a surah that is playing and resuming it after —
- * and sets the next alarm again after a reboot, a clock change or an update.
+ * Plays the adhan when its alarm goes off — pausing a surah that is playing and resuming it after — or, in the silent mode
+ * («تنبيه بإشعار»), shows AdhanPopup instead; and sets the next alarm again after a reboot, a clock change or an update.
  *
  * The adhan only starts while the TV is on: an alarm that arrives in standby is skipped, and none is
  * made up after a reboot; one that is playing stops when the screen goes off. (Without the exact-alarm
@@ -33,7 +33,8 @@ public class AdhanReceiver extends BroadcastReceiver {
         long due = intent.getLongExtra(AdhanScheduler.EXTRA_DUE, 0);
         if (prefs.adhanOn() && screenOn(context) && !alreadyPlayed(prefs, due, now)) {
             if (due > 0) prefs.setLastDue(due); else prefs.setLastAlarmAt(now);
-            MusicService.adhan(context, prefs.playVoice(context), null, 0);
+            if (Prefs.MODE_POPUP.equals(prefs.adhanMode())) AdhanPopup.show(context, due);   // «تنبيه بإشعار»: the card, no sound
+            else MusicService.adhan(context, prefs.playVoice(context), null, 0);
         }
         AdhanScheduler.schedule(context);
         PrayerTimes.refresh(context, null);

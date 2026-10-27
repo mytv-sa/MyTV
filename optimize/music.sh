@@ -9,7 +9,8 @@
 #   optimize/music.sh sleep 30             stop after 30 min (0 cancels)
 #   optimize/music.sh adhan                the adhan: on/off, the voice, when the next one is
 #   optimize/music.sh adhan now [voice]    play it right now
-#   optimize/music.sh adhan on | off
+#   optimize/music.sh adhan on | off | popup     on: the adhan's sound; popup: a silent card in the middle of the screen for 40 s
+#   optimize/music.sh adhan popup-now      show that card at once
 #   optimize/music.sh adhan voice 3        which of the 21 recordings plays at the prayer times
 #   optimize/music.sh adhan volume 60      the adhan's own volume, 10-100 (percent of the TV's maximum)
 #   optimize/music.sh adhan add FILE       the person's own recording as the adhan («أذان من ملفي»): made small here (mono AAC, about
@@ -99,7 +100,7 @@ Usage: optimize/music.sh <command> [arguments]
   seek <seconds>          jump forward/back (e.g. seek -10)
   sleep <minutes>         sleep timer; 0 cancels
   adhan [now [voice]]     the adhan: its state, play it now, on/off, or the voice
-  adhan on | off
+  adhan on | off | popup  on = the sound, popup = a silent card for 40 s; adhan popup-now shows the card at once
   adhan voice <1-21 | own>
   adhan volume <10-100>
   adhan add <file>        your own recording as the adhan (needs ffmpeg here); adhan own-clear removes it
@@ -224,6 +225,16 @@ PY
         action=$(printf '%s' "$what" | tr '[:lower:]' '[:upper:]')
         tv "am broadcast -n sa.mytv.home/.tilawah.MusicReceiver -a sa.mytv.home.ADHAN_$action" > /dev/null
         echo "Automatic adhan $what."
+        ;;
+      popup)   # «تنبيه بإشعار»: a silent card in the middle of the screen at prayer time, for 40 s
+        [ $# -eq 1 ] || usage
+        out=$(tv "am broadcast -n sa.mytv.home/.tilawah.MusicReceiver -a sa.mytv.home.ADHAN_POPUP" | sed -n 's/.*data="\(.*\)"/\1/p')
+        echo "Prayer-time alert: ${out:-popup}."
+        ;;
+      popup-now)   # the card at once, to see how it looks
+        [ $# -eq 1 ] || usage
+        tv "am broadcast -n sa.mytv.home/.tilawah.MusicReceiver -a sa.mytv.home.POPUP_NOW" > /dev/null
+        echo "Card shown for 40 s."
         ;;
       voice)
         [ $# -eq 2 ] || usage
