@@ -89,9 +89,10 @@ jobs:
           files: |
             mytv-screensaver.apk
             mytv-home.apk
-          make_latest: true
+          make_latest: false
 
-      # and every build kept under its own number, the apps' version: APK_TAG=v3.N optimize/install.sh all
+      # and every build kept under its own number, the apps' version: APK_TAG=v3.N optimize/install.sh all. This one is the
+      # repository's «latest»: the apps read their newest version from where /releases/latest points (Updater.LATEST_URL, v3.N)
       - name: Publish to the numbered release
         if: github.ref_name == 'master'
         uses: softprops/action-gh-release@v2
@@ -102,7 +103,7 @@ jobs:
           files: |
             mytv-screensaver.apk
             mytv-home.apk
-          make_latest: false
+          make_latest: true
 
       # next: one test release, replaced by each build; install with APK_TAG=apk-next optimize/install.sh all
       - name: Publish to the apk-next test release

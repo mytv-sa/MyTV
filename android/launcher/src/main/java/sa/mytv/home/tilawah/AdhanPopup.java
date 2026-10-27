@@ -55,7 +55,7 @@ final class AdhanPopup {
         }
         float d = c.getResources().getDisplayMetrics().density;
 
-        final FrameLayout root = new Root(c);
+        final FrameLayout root = new FrameLayout(c);
         LinearLayout card = new LinearLayout(c);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -86,6 +86,11 @@ final class AdhanPopup {
         closeBtn.setFocusable(true);
         closeBtn.setClickable(true);
         closeBtn.setOnClickListener(v -> close(c));
+        closeBtn.setOnKeyListener((v, code, e) -> {   // the button always has the focus: Back closes the card like «إغلاق»
+            if (code != KeyEvent.KEYCODE_BACK) return false;
+            if (e.getAction() == KeyEvent.ACTION_UP) close(c);
+            return true;
+        });
         closeBtn.setOnFocusChangeListener((v, has) -> btn.setStroke(Math.round(3 * d), has ? 0xFFFFF3D6 : 0x00000000));
         card.addView(closeBtn);
 
@@ -135,21 +140,6 @@ final class AdhanPopup {
         int best = PrayerTimes.PRAYERS[0];
         for (int p : PrayerTimes.PRAYERS) if (Math.abs(t.at[p] - at) < Math.abs(t.at[best] - at)) best = p;
         return best;
-    }
-
-    /** the card's window: Back closes it like «إغلاق» */
-    private static final class Root extends FrameLayout {
-        private final Context app;
-
-        Root(Context c) { super(c); app = c; }
-
-        @Override public boolean dispatchKeyEvent(KeyEvent e) {
-            if (e.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-                if (e.getAction() == KeyEvent.ACTION_UP) close(app);
-                return true;
-            }
-            return super.dispatchKeyEvent(e);
-        }
     }
 
     private static WindowManager wm(Context c) { return (WindowManager) c.getSystemService(Context.WINDOW_SERVICE); }
