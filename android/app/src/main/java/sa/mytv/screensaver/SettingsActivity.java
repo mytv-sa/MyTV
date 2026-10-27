@@ -761,17 +761,17 @@ public class SettingsActivity extends Activity {
 
     /** when «طابت أيامكم» (day) or «تصبحون على خير» starts */
     private void pickGreetStart(final boolean day) {
-        final String[][] all = day ? Prefs.GREET_DAY_STARTS : Prefs.GREET_NIGHT_STARTS;
+        final String[][] starts = day ? Prefs.GREET_DAY_STARTS : Prefs.GREET_NIGHT_STARTS;
         String cur = day ? prefs.greetDayStart() : prefs.greetNightStart();
-        String[] labels = new String[all.length];
+        String[] labels = new String[starts.length];
         int sel = 0;
-        for (int i = 0; i < all.length; i++) {
-            labels[i] = all[i][1];
-            if (all[i][0].equals(cur)) sel = i;
+        for (int i = 0; i < starts.length; i++) {
+            labels[i] = starts[i][1];
+            if (starts[i][0].equals(cur)) sel = i;
         }
         new Dlg(this).setTitle(day ? "تبدأ «طابت أيامكم»" : "تبدأ «تصبحون على خير»")
             .setSingleChoiceItems(labels, sel, (d, i) -> {
-                if (day) prefs.setGreetDayStart(all[i][0]); else prefs.setGreetNightStart(all[i][0]);
+                if (day) prefs.setGreetDayStart(starts[i][0]); else prefs.setGreetNightStart(starts[i][0]);
                 d.dismiss();
                 render();
             }).show();
