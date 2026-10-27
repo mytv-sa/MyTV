@@ -159,6 +159,8 @@ fi
 
 if [ "$what" = saver ] || [ "$what" = all ]; then
   push_install mytv-screensaver.apk sa.mytv.screensaver
+  # «تحديث التطبيق» in its settings installs the next versions of both apps without a computer: «تثبيت تطبيقات غير معروفة»
+  "$PY" -I optimize/tv.py "appops set sa.mytv.screensaver REQUEST_INSTALL_PACKAGES allow" || true
   printf '%s\n' \
     "settings put secure screensaver_enabled 1" \
     "settings put secure screensaver_components sa.mytv.screensaver/.ScreenDream" \

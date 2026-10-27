@@ -243,7 +243,16 @@ public class SettingsActivity extends Activity {
         group("التطبيق", null);
         row("التحديث التلقائي للصفحة", prefs.autoUpdate() ? "يعمل · عند بدء الشاشة، كل ٦ ساعات" : "متوقف", R.drawable.ic_sync, new Runnable() { public void run() {
             prefs.setAutoUpdate(!prefs.autoUpdate()); render(); } });
-        View last = row("تحديث الشاشة الآن", "ينزّل أحدث نسخة من الشاشة", R.drawable.ic_sync, new Runnable() { public void run() { updateNow(); } });
+        row("تحديث الشاشة الآن", "ينزّل أحدث نسخة من الشاشة", R.drawable.ic_sync, new Runnable() { public void run() { updateNow(); } });
+        String latest = prefs.raw().getString("latestVersion", null);
+        Integer newer = Versions.compare(latest, BuildConfig.VERSION_NAME);
+        final boolean hasNew = newer != null && newer > 0;
+        View last = row(hasNew ? "تحديث التطبيق إلى " + latest : "تحديث التطبيق",
+            AppUpdate.running() && updateSaid != null ? updateSaid
+                : hasNew ? "يحمّل الإصدار الجديد، ثم اضغط «تثبيت» في النافذة (مرة لكل تطبيق)" : "التطبيق محدّث · اختيار للفحص الآن",
+            R.drawable.ic_sync, null);
+        updateLine = (TextView) ((LinearLayout) ((LinearLayout) last).getChildAt(1)).getChildAt(1);
+        last.setOnClickListener(v -> updateApp());
         note(last, Updater.versionLines(this));
 
         View back = null;
@@ -979,6 +988,45 @@ public class SettingsActivity extends Activity {
             final String msg = Updater.check(getApplicationContext(), true);
             runOnUiThread(() -> { toast(msg); if (!isFinishing()) render(); });
         }).start();
+    }
+
+    /** the second line of «تحديث التطبيق» (the list is built again often), and what the update said last */
+    private TextView updateLine;
+    private static String updateSaid;
+
+    /**
+     * «تحديث التطبيق»: asks GitHub for the newest version first; when it is newer than this one, both apps are downloaded and
+     * Android's installer asks for «تثبيت» (AppUpdate). The progress shows on the row's second line.
+     */
+    private void updateApp() {
+        if (AppUpdate.running()) return;
+        if (!AppUpdate.allowed(this)) {
+            toast("يحتاج التطبيق إذن «تثبيت تطبيقات غير معروفة»");
+            try {
+                startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName())));
+            } catch (RuntimeException e) {
+                toast("اطلب من مساعد الذكاء الاصطناعي «حدّث تلفزيوني»");
+            }
+            return;
+        }
+        say("جارٍ الفحص…");
+        new Thread(() -> {
+            Updater.check(getApplicationContext(), true);   // the page too, and the newest version
+            runOnUiThread(() -> {
+                String latest = prefs.raw().getString("latestVersion", null);
+                Integer newer = Versions.compare(latest, BuildConfig.VERSION_NAME);
+                if (newer == null || newer <= 0) {
+                    say(latest == null ? "تعذّر الفحص، جرّب بعد قليل" : "التطبيق محدّث · الإصدار " + BuildConfig.VERSION_NAME);
+                    return;
+                }
+                AppUpdate.start(this, latest, this::say);
+            });
+        }).start();
+    }
+
+    private void say(String line) {
+        updateSaid = conv(line);
+        if (updateLine != null) updateLine.setText(updateSaid);
     }
 
     private void openDreamSettings() {

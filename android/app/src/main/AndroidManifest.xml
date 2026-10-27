@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- only used if the owner allows it for the app: the idle delay row and SaverReceiver's idle -->
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!-- «تحديث التطبيق»: both apps of the newest release, through Android's installer (AppUpdate); granted by optimize/install.sh -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- the launcher (same signing key) reads the settings for its home-screen card -->
     <permission
@@ -82,6 +84,11 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!-- Android's installer answers «تحديث التطبيق» here (AppUpdate); only through the app's own PendingIntent -->
+        <receiver
+            android:name=".AppUpdate$Status"
+            android:exported="false" />
 
         <!-- settings from ADB (agents, optimize/saver.sh); DUMP = only the shell can send it -->
         <receiver
