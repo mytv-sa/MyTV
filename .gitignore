@@ -31,3 +31,5 @@ dist/mytv.html
 .fonts-private/
 /Thmanyah-Font-Family/
 /Thmanyah-Font-Family.zip
+# the owner's own notes (the TV's address, where the signing key is): never on the public repository
+/ملاحظات-المشروع.md
