@@ -49,9 +49,12 @@ final class GreetingText {
         }
     }
 
-    /** «صباح الخير عائلتي»: the word the person chose after the greeting (empty: the greeting alone). */
+    /**
+     * «صباح الخير عائلتي»: the word the person chose after the greeting (empty: the greeting alone). Two spaces before it: the tail
+     * of «ر» in «الخير» runs into one, and the word looked stuck to it on the TV.
+     */
     static String withWord(String greeting, String word) {
-        return word == null || word.trim().isEmpty() ? greeting : greeting + " " + word.trim();
+        return word == null || word.trim().isEmpty() ? greeting : greeting + "  " + word.trim();
     }
 
     /** Open-Meteo's WMO weather code, as a short phrase that goes before «في المدينة». */

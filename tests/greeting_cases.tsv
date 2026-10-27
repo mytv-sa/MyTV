@@ -24,9 +24,9 @@ start	14	700	840	an hour of the day
 start	0	1155	1440	0 is the coming midnight
 start	off	1155	-1	off
 start	isha	1155	1155	isha: the prayer's moment
-word	صباح الخير	عائلتي	صباح الخير عائلتي	the word after the greeting
+word	صباح الخير	عائلتي	صباح الخير  عائلتي	the word after the greeting
 word	مساء الخير		مساء الخير	no word: the greeting alone
-word	تصبحون على خير	 أهلي 	تصبحون على خير أهلي	spaces around it are dropped
+word	تصبحون على خير	 أهلي 	تصبحون على خير  أهلي	spaces around it are dropped
 weather	0	0	الرياض	31	hindi	سماء صافية في الرياض، ٣١°	clear
 weather	0	0	Riyadh	30.6	latin	سماء صافية في Riyadh، 31°	latin digits, rounded
 weather	2	0	جدة	28.4	hindi	غائم جزئيًا في جدة، ٢٨°	partly cloudy
