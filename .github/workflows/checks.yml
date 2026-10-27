@@ -10,7 +10,7 @@ on:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # Playwright 1.56 has no build for Ubuntu 26 yet
     steps:
       - uses: actions/checkout@v4
       # Thmanyah's licence allows its files only inside a built product: they live in the private
