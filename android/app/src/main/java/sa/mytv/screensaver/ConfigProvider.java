@@ -48,12 +48,13 @@ public class ConfigProvider extends ContentProvider {
             }
             return t;
         }
-        // home_panel: the first card alone (what an older launcher reads); home_panels: all of them, "a,b,c" or "none"
+        // home_panel: the first card alone (what an older launcher reads); home_panels: all of them, "a,b,c" or "none";
+        // home_rows: the row of each of those, "t,b" (t = top, b = bottom); swash: «الحروف المرسلة», off|titles|all
         List<String> cards = p.homePanels();
         MatrixCursor c = new MatrixCursor(new String[] {"fragment", "home_panel", "greeting", "home_panels", "adhan_bar",
-            "greet_word", "greet_day", "greet_night"});
+            "greet_word", "greet_day", "greet_night", "home_rows", "swash"});
         c.addRow(new Object[] {p.fragment(), cards.isEmpty() ? "none" : cards.get(0), p.greeting() ? "1" : "0", p.homePanel(), p.adhanBar() ? "1" : "0",
-            p.greetWordShown(), p.greetDay(), p.greetNight()});
+            p.greetWordShown(), p.greetDay(), p.greetNight(), p.homeRows(), p.swash()});
         return c;
     }
 

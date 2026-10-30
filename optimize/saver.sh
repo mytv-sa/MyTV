@@ -30,7 +30,9 @@
 #   optimize/saver.sh photos 15                    change the photo every N minutes: 5 10 15 30 60 (default 30)
 #   optimize/saver.sh idle 10                      the TV starts the screensaver after N idle minutes: 1 2 5 10 15 30
 #                                                  (the TV's own timer; left alone unless you run this)
-#   optimize/saver.sh cardstyle glass1             look of the card beside the clock: current dark1 glass1 dark3 glass3
+#   optimize/saver.sh cardstyle glass1             look of the card beside the clock: current dark1 glass1 dark3 glass3 sadu night
+#   optimize/saver.sh swash titles                 «الحروف المرسلة» (Thmanyah's swash letters): off, titles, all
+#   optimize/saver.sh home-rows b,t,t              the row of each home-screen place, 1 to 3: t = top, b = bottom (two per row at most)
 #   optimize/saver.sh national off                 the quiet green look on National Day (21-25 Sep) and Founding Day (20-24 Feb): auto (default) or off
 #   optimize/saver.sh digits latin                 numbers: hindi = ١٢٣ (default), latin = 123
 #   optimize/saver.sh markets tasi,gold,btc        top left, up to 4 in order: tasi aramco spx btc gold silver xrp (default tasi,spx,btc); none = no markets
@@ -155,6 +157,8 @@ case "${1:-}" in
   minrating)set1 minrating "${2:?usage: optimize/saver.sh minrating 7}" ;;
   photos)   set1 photos "${2:?usage: optimize/saver.sh photos 15}" ;;
   cardstyle)set1 cardstyle "${2:?usage: optimize/saver.sh cardstyle glass1}" ;;
+  swash)    set1 swash "${2:?usage: optimize/saver.sh swash off|titles|all}" ;;
+  home-rows)set1 home_rows "${2:?usage: optimize/saver.sh home-rows b,t,t}" ;;
   markets)  set1 markets "${2:?usage: optimize/saver.sh markets tasi,gold,btc}" ;;
   mkstyle)  set1 mkstyle "${2:?usage: optimize/saver.sh mkstyle prices}" ;;
   stocks)

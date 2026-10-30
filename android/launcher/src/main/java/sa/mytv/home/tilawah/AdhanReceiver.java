@@ -20,6 +20,15 @@ public class AdhanReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
         if (intent == null || intent.getAction() == null) return;
         Prefs prefs = new Prefs(context);
+        if (JumuahScheduler.ACTION.equals(intent.getAction())) {   // «تذكير الجمعة», two hours before; the TV must be on, as for the adhan
+            long dhuhr = intent.getLongExtra(AdhanScheduler.EXTRA_DUE, 0);
+            if (prefs.jumuahOn() && screenOn(context) && dhuhr > 0 && prefs.jumuahDue() != dhuhr) {
+                prefs.setJumuahDue(dhuhr);
+                AdhanPopup.showJumuah(context, dhuhr);
+            }
+            JumuahScheduler.schedule(context);
+            return;
+        }
         boolean alarm = AdhanScheduler.ACTION.equals(intent.getAction());
 
         if (!alarm) {

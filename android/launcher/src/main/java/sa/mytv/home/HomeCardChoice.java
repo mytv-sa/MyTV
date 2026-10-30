@@ -26,6 +26,16 @@ final class HomeCardChoice {
         return Math.max(1, Math.min(3, choice[1].split(",").length));
     }
 
+    /** The cards to size the box for: a card in the bottom row ("b" in rows) needs the tall box that two cards get. */
+    static int boxCards(int cards, String rows) {
+        return rows != null && rows.contains("b") ? Math.max(2, cards) : cards;
+    }
+
+    /** The page with each card's row (#home_rows=t,b) when the screensaver says them and there is a page at all. */
+    static String withRows(String url, String rows) {
+        return url == null || rows == null || !rows.matches("[tb](,[tb]){0,2}") ? url : url + "&home_rows=" + rows;
+    }
+
     /** Is «المهام» one of the cards a pick shows? Then the card is a button on the home screen (the page is told with live=1). */
     static boolean hasTasks(String[] choice) {
         if (choice == null || "none".equals(choice[1])) return false;

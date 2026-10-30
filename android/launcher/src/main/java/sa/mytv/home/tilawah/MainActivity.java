@@ -30,7 +30,7 @@ public class MainActivity extends Activity {
     private static final int TAB_RECITERS = 0, TAB_STATIONS = 1, TAB_ADHAN = 2;
 
     private static final int KIND_RESUME = 0, KIND_RECITER = 1, KIND_STATION = 2,
-            KIND_PRAYER = 3, KIND_ADHAN_TOGGLE = 4, KIND_VOICE = 5, KIND_VOLUME = 6, KIND_EXACT = 7;
+            KIND_PRAYER = 3, KIND_ADHAN_TOGGLE = 4, KIND_VOICE = 5, KIND_VOLUME = 6, KIND_EXACT = 7, KIND_JUMUAH = 8;
 
     private Catalog cat;
     private Prefs prefs;
@@ -94,6 +94,11 @@ public class MainActivity extends Activity {
                 String m = prefs.adhanMode();
                 prefs.setAdhanMode(Prefs.MODE_OFF.equals(m) ? Prefs.MODE_POPUP : Prefs.MODE_POPUP.equals(m) ? Prefs.MODE_SOUND : Prefs.MODE_OFF);
                 AdhanScheduler.schedule(this);
+                adapter.rebuild();
+                focusList(list.getSelectedItemPosition());
+            } else if (row.kind == KIND_JUMUAH) {
+                prefs.setJumuahOn(!prefs.jumuahOn());
+                JumuahScheduler.schedule(this);
                 adapter.rebuild();
                 focusList(list.getSelectedItemPosition());
             } else if (row.kind == KIND_VOICE) {
@@ -362,6 +367,8 @@ public class MainActivity extends Activity {
                 if (prefs.adhanOn() && !AdhanScheduler.exactAllowed(MainActivity.this)) {   // the alarm may be minutes late
                     rows.add(new Row(false, KIND_EXACT, getString(R.string.adhan_exact_title), getString(R.string.adhan_exact_detail), -1));
                 }
+                rows.add(new Row(false, KIND_JUMUAH, getString(R.string.jumuah_title),
+                        getString(prefs.jumuahOn() ? R.string.jumuah_on : R.string.adhan_off), -1));
                 rows.add(new Row(false, KIND_VOICE, getString(R.string.adhan_voice), Adhan.label(prefs.playVoice(MainActivity.this)), -1));
                 rows.add(new Row(false, KIND_VOLUME, getString(R.string.adhan_volume),
                         volumeText(prefs.adhanVolume()), -1));

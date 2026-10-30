@@ -22,6 +22,7 @@ final class AdhanScheduler {
     private AdhanScheduler() {}
 
     static void schedule(Context c) {
+        JumuahScheduler.schedule(c);   // the Friday reminder moves with the adhan's times, on or off
         AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
         am.cancel(pending(c, 0));

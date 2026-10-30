@@ -40,6 +40,8 @@
     <string name="adhan_on">تنبيه صوتي · الأذان</string>
     <string name="adhan_off">متوقف</string>
     <string name="adhan_popup">تنبيه بإشعار · بطاقة بلا صوت ٤٠ ثانية</string>
+    <string name="jumuah_title">تذكير الجمعة</string>
+    <string name="jumuah_on">بطاقة قبل صلاة الجمعة بساعتين</string>
     <string name="adhan_voice">المؤذن</string>
     <string name="adhan_voices">اختر المؤذن</string>
     <string name="adhan_volume">صوت الأذان</string>

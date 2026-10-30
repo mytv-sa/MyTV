@@ -922,6 +922,7 @@ public class MainActivity extends Activity {
         Calendar now = ClockZone.at(ms, tz);   // the city's time, like the prayer times beside it
         int h = now.get(Calendar.HOUR_OF_DAY);
         greetingLine.update(h, cfg);
+        applySwash(cfg.swash);
         int hh = h % 12 == 0 ? 12 : h % 12;   // always 12-hour
         clock.setText(arabicDigits(hh + ":" + String.format(Locale.ROOT, "%02d", now.get(Calendar.MINUTE))));
         ampm.setText(h < 12 ? "ص" : "م");
@@ -1360,7 +1361,21 @@ public class MainActivity extends Activity {
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTypeface(font(family));
         t.setTextColor(color);
+        texts.add(t);
+        if ("all".equals(swashShown)) t.setFontFeatureSettings("'ss01'");   // one made after the setting was applied
         return t;
+    }
+
+    /** every text of ours, for «الحروف المرسلة» in all of them (weak: the dock's rebuilt texts drop out on their own) */
+    private final java.util.Set<TextView> texts = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
+    private String swashShown = "off";
+
+    /** «الحروف المرسلة» (Thmanyah's ss01): titles = the greeting, all = every text; set again only when the setting changed */
+    private void applySwash(String swash) {
+        if (swash.equals(swashShown)) return;
+        swashShown = swash;
+        boolean all = "all".equals(swash), titles = all || "titles".equals(swash);
+        for (TextView t : texts) t.setFontFeatureSettings(all || (titles && t == greeting) ? "'ss01'" : null);
     }
 
     private int dp(float v) {

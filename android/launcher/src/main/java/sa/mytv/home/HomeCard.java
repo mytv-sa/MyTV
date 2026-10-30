@@ -47,7 +47,7 @@ final class HomeCard {
     private final Sizer sizer;
     private WebView web;
     private String url;
-    private int cards;   // how many the page in `web` shows
+    private int cards;   // how many the box is sized for: the page's cards, two at least when one sits in the bottom row
     private boolean tasks;   // «المهام» is one of them: `target` exists
     private View target;
     private FrameLayout.LayoutParams targetParams;
@@ -99,27 +99,32 @@ final class HomeCard {
     }
 
     private String readUrl() {
-        String frag = null, panel = null;
+        String frag = null, panel = null, rows = null;
         try (Cursor c = activity.getContentResolver().query(CONFIG, null, null, null, null)) {
             if (c != null && c.moveToFirst()) {
                 frag = c.getString(0);
                 panel = c.getString(1);
                 int all = c.getColumnIndex("home_panels");   // "a,b,c": every card; an older screensaver has only the first
                 if (all >= 0 && c.getString(all) != null) panel = c.getString(all);
+                int r = c.getColumnIndex("home_rows");   // "t,b": each card's row; an older screensaver has none (the old layout)
+                if (r >= 0) rows = c.getString(r);
             }
         } catch (RuntimeException e) {
             // the screensaver's settings are out of reach
         }
         SharedPreferences sp = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (frag != null && panel != null) {   // remember what was read, for when it can't be read
-            sp.edit().putString("frag", frag).putString("panel", panel).apply();
+            sp.edit().putString("frag", frag).putString("panel", panel).putString("rows", rows).apply();
+        } else {
+            rows = sp.getString("rows", null);
         }
         // Unreadable settings (the screensaver is missing, too old, or signed with another key, e.g. reinstalled
         // before this app): keep the last cards chosen, «بدون» included. Only with nothing remembered, the prayers.
         String[] choice = HomeCardChoice.pick(frag, panel, sp.getString("frag", null), sp.getString("panel", null));
-        cards = HomeCardChoice.count(choice);
+        // a card in the bottom row needs the whole height down to the apps, as two or three cards always had
+        cards = HomeCardChoice.boxCards(HomeCardChoice.count(choice), rows);
         tasks = HomeCardChoice.hasTasks(choice);
-        return HomeCardChoice.liveUrl(choice);
+        return HomeCardChoice.withRows(HomeCardChoice.liveUrl(choice), rows);
     }
 
     @SuppressLint("SetJavaScriptEnabled")

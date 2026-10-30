@@ -11,6 +11,7 @@
 #   optimize/music.sh adhan now [voice]    play it right now
 #   optimize/music.sh adhan on | off | popup     on: the adhan's sound; popup: a silent card in the middle of the screen for 40 s
 #   optimize/music.sh adhan popup-now      show that card at once
+#   optimize/music.sh jumuah now|on|off    the Friday reminder (a card two hours before the Jumu'ah): show it now, on, off
 #   optimize/music.sh adhan voice 3        which of the 21 recordings plays at the prayer times
 #   optimize/music.sh adhan volume 60      the adhan's own volume, 10-100 (percent of the TV's maximum)
 #   optimize/music.sh adhan add FILE       the person's own recording as the adhan («أذان من ملفي»): made small here (mono AAC, about
@@ -104,6 +105,7 @@ Usage: optimize/music.sh <command> [arguments]
   adhan voice <1-21 | own>
   adhan volume <10-100>
   adhan add <file>        your own recording as the adhan (needs ffmpeg here); adhan own-clear removes it
+  jumuah now | on | off   the Friday reminder two hours before the Jumu'ah: show it now, or switch it on/off
 EOF
   exit 2
 }
@@ -256,6 +258,22 @@ PY
       *)
         usage
         ;;
+    esac
+    ;;
+
+  jumuah)   # «تذكير الجمعة»: the card two hours before the Jumu'ah
+    case "${1:-}" in
+      now)
+        tv "am broadcast -n sa.mytv.home/.tilawah.MusicReceiver -a sa.mytv.home.JUMUAH_NOW" > /dev/null
+        echo "Friday reminder shown for 40 s."
+        ;;
+      on|off)
+        action=$(printf '%s' "$1" | tr a-z A-Z)
+        out=$(tv "am broadcast -n sa.mytv.home/.tilawah.MusicReceiver -a sa.mytv.home.JUMUAH_$action" \
+          | sed -n 's/.*data="\(.*\)"/\1/p' | tail -n 1)
+        echo "Friday reminder: ${out:-$1}"
+        ;;
+      *) usage ;;
     esac
     ;;
 

@@ -161,6 +161,8 @@ public class SettingsActivity extends Activity {
         noConv = false;
         row("شكل البطاقات", Prefs.cardStyleLabel(prefs.cardStyle()), R.drawable.ic_eye,
             new Runnable() { public void run() { pickCardStyle(); } });
+        row("الحروف المرسلة", Prefs.swashLabel(prefs.swash()), R.drawable.ic_language,
+            new Runnable() { public void run() { pickSwash(); } });
         row("المناسبات الوطنية", Prefs.nationalLabel(prefs.national()), R.drawable.ic_eye,
             new Runnable() { public void run() { pickNational(); } });
         row("صوري (" + arabicNum(Own.count(this)) + "/" + arabicNum(Own.MAX) + ")", ownLabel(), R.drawable.ic_eye,
@@ -186,11 +188,18 @@ public class SettingsActivity extends Activity {
         // ===== 2. the home screen alone
         group("الواجهة الرئيسية", "ما يظهر عند تشغيل التلفزيون وزر Home");
         header("البطاقات");
-        // up to three cards left of the clock; each place takes any card, or «بدون» (the ones after it move up)
+        // up to three cards left of the clock; each place takes any card, or «بدون» (nothing else moves), and its row, top or
+        // bottom (just above the apps); two cards in a row sit side by side, one has the row's width
         for (int k = 0; k < Prefs.HOME_CARDS; k++) {
             final int place = k;
             row(HOME_CARD_NAMES[k], Prefs.panelLabel(prefs.homePanelAt(k), "بدون"), R.drawable.ic_eye,
                 new Runnable() { public void run() { pickPanel(place); } });
+            if (!"none".equals(prefs.homePanelAt(k)))
+                row("مكان " + HOME_CARD_NAMES[k],
+                    Prefs.ROW_TOP.equals(prefs.homeRowAt(k)) ? "أعلى" : "أسفل · فوق التطبيقات", R.drawable.ic_eye,
+                    new Runnable() { public void run() {
+                        if (!prefs.setHomeRowAt(place, Prefs.other(prefs.homeRowAt(place)))) toast("الصف يتسع لبطاقتين فقط");
+                        render(); } });
         }
         header("الترحيب");
         row("التحية والطقس", prefs.greeting() ? "تعمل" : "متوقفة", R.drawable.ic_eye,
@@ -840,6 +849,21 @@ public class SettingsActivity extends Activity {
         // the preview is the card you have now, in the style under the cursor (the prayer times when there is no card)
         final String card = "none".equals(prefs.panel()) ? "prayers" : prefs.panel();
         pickWithPreview("شكل البطاقة", values, labels, about, sel, v -> prefs.previewUrl(this, card, v), v -> prefs.setCardStyle(v));
+    }
+
+    /** «الحروف المرسلة»: Thmanyah's swash letters; the preview is the card you have now with the choice under the cursor */
+    private void pickSwash() {
+        String[] labels = new String[Prefs.SWASH.length], values = new String[labels.length], about = new String[labels.length];
+        int sel = 0;
+        for (int i = 0; i < labels.length; i++) {
+            values[i] = Prefs.SWASH[i][0];
+            labels[i] = Prefs.SWASH[i][1];
+            about[i] = Prefs.about(Prefs.SWASH_ABOUT, values[i]);
+            if (values[i].equals(prefs.swash())) sel = i;
+        }
+        final String card = "none".equals(prefs.panel()) ? "prayers" : prefs.panel();
+        pickWithPreview("الحروف المرسلة", values, labels, about, sel,
+            v -> prefs.previewUrl(this, card, prefs.cardStyle(), v), v -> prefs.setSwash(v));
     }
 
     private void pickSlot() {

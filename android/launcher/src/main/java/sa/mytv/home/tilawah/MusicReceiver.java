@@ -47,6 +47,17 @@ public class MusicReceiver extends BroadcastReceiver {
             case "sa.mytv.home.POPUP_NOW":   // optimize/music.sh adhan popup-now: the card at once, to see it
                 AdhanPopup.show(context, 0);
                 return;
+            case "sa.mytv.home.JUMUAH_NOW":   // optimize/music.sh jumuah now: the Friday reminder at once, to see it
+                AdhanPopup.showJumuah(context, 0);
+                return;
+            case "sa.mytv.home.JUMUAH_ON":
+            case "sa.mytv.home.JUMUAH_OFF": {
+                prefs.setJumuahOn("sa.mytv.home.JUMUAH_ON".equals(action));
+                JumuahScheduler.schedule(context);
+                long next = prefs.jumuahOn() ? JumuahScheduler.nextJumuah(context) : 0;
+                setResultData(next == 0 ? "off" : "on, next at " + new java.util.Date(next - JumuahScheduler.BEFORE));
+                return;
+            }
             case "sa.mytv.home.ADHAN_VOLUME": {   // optimize/music.sh adhan volume 60
                 int percent = intent.getIntExtra("percent", -1);
                 if (percent < 10 || percent > 100) return;

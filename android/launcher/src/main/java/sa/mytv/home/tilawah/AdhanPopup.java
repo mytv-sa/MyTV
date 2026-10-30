@@ -26,9 +26,13 @@ import java.util.TimeZone;
  * with «إغلاق». No sound at all. It is a system overlay, so it needs «الظهور فوق التطبيقات» (SYSTEM_ALERT_WINDOW), which
  * optimize/install.sh grants over ADB; without it a toast says the prayer's name instead. While the card is up the remote
  * works the card (OK or Back closes it), not the app behind.
+ *
+ * The same card, with other words, is the Friday reminder two hours before the Jumu'ah (JumuahScheduler).
  */
 final class AdhanPopup {
     static final int SECONDS = 40;
+    /** the sunnahs of Friday, under the reminder's time */
+    static final String JUMUAH_SUNNAHS = "الاغتسال والطِّيب · التبكير إلى المسجد · قراءة سورة الكهف";
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static View shown;   // one card at a time
     private static Runnable ticker;
@@ -41,14 +45,30 @@ final class AdhanPopup {
         MAIN.post(() -> open(c, due));
     }
 
+    /** the Friday reminder; dhuhr: the Jumu'ah's moment (0: today's Dhuhr) */
+    static void showJumuah(Context context, final long dhuhr) {
+        final Context c = context.getApplicationContext();
+        MAIN.post(() -> {
+            PrayerTimes t = PrayerTimes.today(c);
+            long at = dhuhr > 0 ? dhuhr : t.at[PrayerTimes.DHUHR];
+            // the time left as it is now, not «ساعتين» always: an alarm Android delivered late says so
+            String title = "صلاة الجمعة " + PrayerTimes.remaining(at - System.currentTimeMillis());
+            present(c, "تذكير الجمعة", title, "الأذان " + PrayerTimes.clock12(t.clock[PrayerTimes.DHUHR]), JUMUAH_SUNNAHS);
+        });
+    }
+
     private static void open(final Context c, long due) {
-        close(c);
         PrayerTimes t = PrayerTimes.today(c);
         int prayer = nearest(t, due > 0 ? due : System.currentTimeMillis());
         boolean jumuah = prayer == PrayerTimes.DHUHR
                 && Calendar.getInstance(TimeZone.getTimeZone(Place.get(c).tz), Locale.US).get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY;
         String name = jumuah ? "الجمعة" : PrayerTimes.NAMES[prayer];
-        String title = "حان الآن وقت صلاة " + name;
+        present(c, "تنبيه الصلاة", "حان الآن وقت صلاة " + name, PrayerTimes.clock12(t.clock[prayer]), null);
+    }
+
+    /** the card: a small gold label, the title, the time, and an optional line under it (note) */
+    private static void present(final Context c, String label, String title, String time, String note) {
+        close(c);
         if (!canOverlay(c)) {   // no permission for a card over the apps: at least the words
             Toast.makeText(c, title, Toast.LENGTH_LONG).show();
             return;
@@ -60,25 +80,30 @@ final class AdhanPopup {
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
         card.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        int pad = Math.round(36 * d);
-        card.setPadding(pad, Math.round(30 * d), pad, Math.round(26 * d));
+        int pad = Math.round(30 * d);
+        card.setPadding(pad, Math.round(24 * d), pad, Math.round(20 * d));
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(0xF2081A11);
-        bg.setCornerRadius(28 * d);
+        bg.setCornerRadius(22 * d);
         bg.setStroke(Math.round(2 * d), 0xFFD6AF6B);
         card.setBackground(bg);
 
-        card.addView(line(c, "تنبيه الصلاة", "Thmanyah-Medium", 18, 0xFFD6AF6B));
-        TextView big = line(c, title, "ThmanyahDisplay-Bold", 38, 0xFFF6EFE0);
-        big.setPadding(0, Math.round(8 * d), 0, Math.round(4 * d));
+        card.addView(line(c, label, "Thmanyah-Medium", 15, 0xFFD6AF6B));
+        TextView big = line(c, Ui.digits(title), "ThmanyahDisplay-Bold", 30, 0xFFF6EFE0);
+        big.setPadding(0, Math.round(6 * d), 0, Math.round(3 * d));
         card.addView(big);
-        card.addView(line(c, Ui.digits(PrayerTimes.clock12(t.clock[prayer])), "Thmanyah-Regular", 22, 0xFFC6BBA4));
-        final TextView left = line(c, "", "Thmanyah-Regular", 16, 0xFFC6BBA4);
-        left.setPadding(0, Math.round(14 * d), 0, Math.round(16 * d));
+        card.addView(line(c, Ui.digits(time), "Thmanyah-Regular", 18, 0xFFC6BBA4));
+        if (note != null) {
+            TextView sub = line(c, note, "Thmanyah-Regular", 15, 0xFFE3C68E);
+            sub.setPadding(0, Math.round(10 * d), 0, 0);
+            card.addView(sub);
+        }
+        final TextView left = line(c, "", "Thmanyah-Regular", 13, 0xFFC6BBA4);
+        left.setPadding(0, Math.round(10 * d), 0, Math.round(12 * d));
         card.addView(left);
 
-        final TextView closeBtn = line(c, "إغلاق", "Thmanyah-Medium", 22, 0xFF1A1A12);
-        closeBtn.setPadding(Math.round(44 * d), Math.round(8 * d), Math.round(44 * d), Math.round(12 * d));
+        final TextView closeBtn = line(c, "إغلاق", "Thmanyah-Medium", 18, 0xFF1A1A12);
+        closeBtn.setPadding(Math.round(34 * d), Math.round(6 * d), Math.round(34 * d), Math.round(9 * d));
         final GradientDrawable btn = new GradientDrawable();
         btn.setCornerRadius(999 * d);
         btn.setColor(0xFFD6AF6B);

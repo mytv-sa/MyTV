@@ -33,3 +33,6 @@ dist/mytv.html
 /Thmanyah-Font-Family.zip
 # the owner's own notes (the TV's address, where the signing key is): never on the public repository
 /ملاحظات-المشروع.md
+
+# the owner's own photos, put on the TVs with optimize/photos.sh (never in the public repository)
+/صور/

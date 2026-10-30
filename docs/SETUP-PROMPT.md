@@ -333,7 +333,7 @@ optimize/dock.sh names                            # every app's name: package | 
                                                   # optimize/dock.sh name <pkg> '<الاسم>' <pkg> '<الاسم>' ...
 optimize/saver.sh photos <5, 10, 15, 30 or 60>   # ONLY if I asked how often the photo changes (default 30 minutes: leave it)
 optimize/saver.sh idle <1, 2, 5, 10, 15 or 30>   # ONLY if I asked when the screensaver starts after the TV idles (the TV's own timer: leave it)
-optimize/saver.sh cardstyle <current, dark1, glass1, dark3 or glass3>   # ONLY if I asked for another look for the card beside the clock (default current: leave it)
+optimize/saver.sh cardstyle <current, dark1, glass1, dark3, glass3, sadu or night>   # ONLY if I asked for another look for the card beside the clock (default current: leave it)
 optimize/saver.sh national <auto or off>          # ONLY if I asked to turn off the green look on National Day and Founding Day (default auto: leave it)
 optimize/saver.sh prayeradj <fajr +2 maghrib -1 …, then on>   # ONLY if I said my mosque's adhan is minutes early or late (default off: leave it); off goes back to the calculated times
 optimize/saver.sh digits <hindi or latin>        # ONLY if I asked for 123 instead of ١٢٣ (default hindi: leave it)

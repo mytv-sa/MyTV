@@ -44,6 +44,13 @@ final class Prefs {
     boolean adhanOn() { return !MODE_OFF.equals(adhanMode()); }
     void setAdhanOn(boolean on) { setAdhanMode(on ? MODE_SOUND : MODE_OFF); }
 
+    /** «تذكير الجمعة»: a card two hours before the Jumu'ah (JumuahScheduler); on until it is turned off, whatever the adhan does */
+    boolean jumuahOn() { return sp.getBoolean("jumuah_on", true); }
+    void setJumuahOn(boolean on) { sp.edit().putBoolean("jumuah_on", on).apply(); }
+    /** the Jumu'ah the last reminder was for, so a repeated alarm never shows it twice */
+    long jumuahDue() { return sp.getLong("jumuah_due", 0); }
+    void setJumuahDue(long due) { sp.edit().putLong("jumuah_due", due).apply(); }
+
     /** The adhan's own volume, in percent; the TV's volume comes back after it. */
     int adhanVolume() { int v = sp.getInt("adhan_volume", 30); return v < 10 || v > 100 ? 30 : v; }
     void setAdhanVolume(int percent) { sp.edit().putInt("adhan_volume", percent).apply(); }

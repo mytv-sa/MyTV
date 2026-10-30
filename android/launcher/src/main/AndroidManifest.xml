@@ -194,6 +194,9 @@
                 <action android:name="sa.mytv.home.ADHAN_OFF" />
                 <action android:name="sa.mytv.home.ADHAN_POPUP" />
                 <action android:name="sa.mytv.home.POPUP_NOW" />
+                <action android:name="sa.mytv.home.JUMUAH_NOW" />
+                <action android:name="sa.mytv.home.JUMUAH_ON" />
+                <action android:name="sa.mytv.home.JUMUAH_OFF" />
                 <action android:name="sa.mytv.home.VOICE" />
                 <action android:name="sa.mytv.home.ADHAN_OWN" />
             </intent-filter>

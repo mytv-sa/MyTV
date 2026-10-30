@@ -80,7 +80,10 @@ final class Prefs {
 
     // look of the card beside the clock (sent to the page as #cardstyle=; current is the plain card it always had)
     static final String[][] CARD_STYLES = {{"current", "الحالية"}, {"dark1", "داكنة"}, {"glass1", "زجاجية"},
-        {"dark3", "داكنة بإطار"}, {"glass3", "زجاجية بإطار"}};
+        {"dark3", "داكنة بإطار"}, {"glass3", "زجاجية بإطار"}, {"sadu", "سدو"}, {"night", "ليلية"}};
+
+    // «الحروف المرسلة»: Thmanyah's swash letters, its ss01 (sent to the page as #swash=; off is how it always looked)
+    static final String[][] SWASH = {{"off", "متوقفة"}, {"titles", "في العناوين فقط"}, {"all", "في كل النصوص"}};
 
     // markets at the top left (sent to the page as #markets=, up to MAX_MARKETS, in this order of choice; tasi,spx,btc is what it always showed)
     static final String[][] MARKETS = {
@@ -220,6 +223,13 @@ final class Prefs {
         {"glass1", "زجاجية ضبابية فوق الصورة"},
         {"dark3", "داكنة بإطار ذهبي داخلي ومعيّن على الحافتين"},
         {"glass3", "زجاجية بإطار ذهبي داخلي ومعيّن على الحافتين"},
+        {"sadu", "داكنة دافئة بشريط من نقش السدو أعلاها وأسفلها"},
+        {"night", "كحلية داكنة بلمسة ذهبية في الزاوية"},
+    };
+    static final String[][] SWASH_ABOUT = {
+        {"off", "الحروف كما هي"},
+        {"titles", "الحروف المرسلة في التحية وعناوين البطاقات"},
+        {"all", "الحروف المرسلة في كل النصوص ما عدا الآيات"},
     };
 
     static String about(String[][] table, String v) {
@@ -305,6 +315,14 @@ final class Prefs {
         return CARD_STYLES[0][1];
     }
 
+    String swash() { return sp.getString("swash", "off"); }
+    void setSwash(String v) { sp.edit().putString("swash", v).apply(); }
+
+    static String swashLabel(String v) {
+        for (String[] s : SWASH) if (s[0].equals(v)) return s[1];
+        return SWASH[0][1];
+    }
+
     String slot() { return sp.getString("slot", "matches"); }
     void setSlot(String v) { sp.edit().putString("slot", v).apply(); }
 
@@ -347,9 +365,10 @@ final class Prefs {
      * The page for a preview in the settings: the card alone (#widget=1) with the current settings, but this card in this style.
      * panel= and cardstyle= are taken out of the fragment first: the page reads the first one it finds.
      */
-    String previewUrl(Context c, String panel, String cardStyle) {
-        String frag = fragment().replaceAll("(^|&)(panel|week|cardstyle|home_panel)=[^&]*", "");
-        return pageBase(c) + "#" + frag + "&panel=" + panel + "&cardstyle=" + cardStyle + "&widget=1";
+    String previewUrl(Context c, String panel, String cardStyle) { return previewUrl(c, panel, cardStyle, swash()); }
+    String previewUrl(Context c, String panel, String cardStyle, String swash) {
+        String frag = fragment().replaceAll("(^|&)(panel|week|cardstyle|swash|home_panel)=[^&]*", "");
+        return pageBase(c) + "#" + frag + "&panel=" + panel + "&cardstyle=" + cardStyle + "&swash=" + swash + "&widget=1";
     }
 
     /**
@@ -386,6 +405,7 @@ final class Prefs {
             + "&photos=" + photoMinutes()
             + "&digits=" + digits()
             + "&cardstyle=" + cardStyle()
+            + "&swash=" + swash()
             + "&adhanbar=" + (adhanBar() ? "1" : "0")
             + "&yearstrip=" + (yearStrip() ? "1" : "0")
             + PrayerAdj.fragment(prayerAdjOn(), prayerAdj())
@@ -523,26 +543,78 @@ final class Prefs {
         return out;
     }
 
-    List<String> homePanels() { return parseHomePanels(sp.getString("homePanel", "none")); }
+    /**
+     * The three places of the home screen keep their own card ("homeCard0".."homeCard2", "none" = empty) and their own row
+     * ("homeRow0".., ROW_TOP or ROW_BOTTOM): emptying one place moves nothing else. A TV from before the places has only the list
+     * "homePanel"; it is read as places 0, 1, 2 in order, in the rows that list was drawn in (two on top, the third under them).
+     */
+    static final String ROW_TOP = "t", ROW_BOTTOM = "b";
+    /** a row holds at most two cards side by side */
+    static final int ROW_MAX = 2;
+
+    private boolean placesKept() { return sp.contains("homeCard0"); }
+
+    /** The cards that show, in the order of their places: what the page and the launcher get as home_panels. */
+    List<String> homePanels() {
+        if (!placesKept()) return parseHomePanels(sp.getString("homePanel", "none"));
+        List<String> v = new ArrayList<>();
+        for (int k = 0; k < HOME_CARDS; k++) { String c = homePanelAt(k); if (!"none".equals(c)) v.add(c); }
+        return v;
+    }
+    /** saver.sh's home_panel=a,b,c: the cards into places 0, 1, 2 in that order, the rest empty, the rows as the list was drawn */
     void setHomePanels(List<String> v) {
         List<String> ok = parseHomePanels(join(v, ","));
-        sp.edit().putString("homePanel", ok.isEmpty() ? "none" : join(ok, ",")).apply();
+        SharedPreferences.Editor e = sp.edit().putString("homePanel", ok.isEmpty() ? "none" : join(ok, ","));
+        for (int k = 0; k < HOME_CARDS; k++) e.putString("homeCard" + k, k < ok.size() ? ok.get(k) : "none").remove("homeRow" + k);
+        e.apply();
     }
     /** What the page and saver.sh see: "none", or the cards joined by commas. */
     String homePanel() { List<String> v = homePanels(); return v.isEmpty() ? "none" : join(v, ","); }
     /** The card in place i (0 to 2) of the home screen, or "none". */
-    String homePanelAt(int i) { List<String> v = homePanels(); return i < v.size() ? v.get(i) : "none"; }
-    /** Place i gets that card ("none" empties it and the ones after it move up); a card already in another place moves here. */
-    void setHomePanelAt(int i, String card) {
-        List<String> now = homePanels();
-        String[] slot = new String[HOME_CARDS];
-        for (int k = 0; k < slot.length && k < now.size(); k++) slot[k] = now.get(k);
-        for (int k = 0; k < slot.length; k++) if (k != i && card.equals(slot[k])) slot[k] = null;
-        slot[i] = "none".equals(card) ? null : card;
-        List<String> v = new ArrayList<>();
-        for (String c : slot) if (c != null) v.add(c);
-        setHomePanels(v);
+    String homePanelAt(int i) {
+        if (!placesKept()) { List<String> v = homePanels(); return i < v.size() ? v.get(i) : "none"; }
+        List<String> one = parseHomePanels(sp.getString("homeCard" + i, "none"));
+        return one.isEmpty() ? "none" : one.get(0);
     }
+    /** The row of place i: the one chosen, else where the list put it (the third under the other two). */
+    String homeRowAt(int i) {
+        String r = sp.getString("homeRow" + i, null);
+        if (ROW_TOP.equals(r) || ROW_BOTTOM.equals(r)) return r;
+        return i == 2 ? ROW_BOTTOM : ROW_TOP;
+    }
+    /** The rows of the cards that show, in the order of homePanels(): "t,t,b". */
+    String homeRows() {
+        List<String> v = new ArrayList<>();
+        for (int k = 0; k < HOME_CARDS; k++) if (!"none".equals(homePanelAt(k))) v.add(homeRowAt(k));
+        return join(v, ",");
+    }
+    private int inRow(String row, int except) {
+        int n = 0;
+        for (int k = 0; k < HOME_CARDS; k++) if (k != except && !"none".equals(homePanelAt(k)) && row.equals(homeRowAt(k))) n++;
+        return n;
+    }
+    /** Place i gets that card ("none" empties it; nothing else moves); a card already in another place leaves that place empty. */
+    void setHomePanelAt(int i, String card) {
+        String[] slot = new String[HOME_CARDS], row = new String[HOME_CARDS];
+        for (int k = 0; k < HOME_CARDS; k++) { slot[k] = homePanelAt(k); row[k] = homeRowAt(k); }
+        for (int k = 0; k < HOME_CARDS; k++) if (k != i && card.equals(slot[k])) slot[k] = "none";
+        slot[i] = card;
+        SharedPreferences.Editor e = sp.edit();
+        for (int k = 0; k < HOME_CARDS; k++) e.putString("homeCard" + k, slot[k]).putString("homeRow" + k, row[k]);
+        e.commit();
+        // its row already has two: it goes to the other one
+        if (!"none".equals(card) && inRow(row[i], i) >= ROW_MAX) sp.edit().putString("homeRow" + i, other(row[i])).apply();
+        List<String> shown = homePanels();
+        sp.edit().putString("homePanel", shown.isEmpty() ? "none" : join(shown, ",")).apply();
+    }
+    /** Place i moves to that row; false (and nothing changes) when the row has two cards already. */
+    boolean setHomeRowAt(int i, String r) {
+        if (!"none".equals(homePanelAt(i)) && inRow(r, i) >= ROW_MAX) return false;
+        if (!placesKept()) setHomePanelAt(i, homePanelAt(i));   // the old list becomes places first
+        sp.edit().putString("homeRow" + i, r).apply();
+        return true;
+    }
+    static String other(String row) { return ROW_TOP.equals(row) ? ROW_BOTTOM : ROW_TOP; }
 
     /** The greeting and the weather line on the launcher's home screen (default on). Off: the plain good-morning it had. */
     boolean greeting() { return sp.getBoolean("greeting", true); }

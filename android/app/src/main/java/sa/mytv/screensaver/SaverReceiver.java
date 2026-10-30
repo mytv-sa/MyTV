@@ -22,7 +22,7 @@ import java.util.Locale;
  *       [--es city 'الرس'] [--es lat 25.86 --es lon 43.49 --es tz Asia/Kuwait]   (tz is needed for a place that is not in the list) [--es teams '136013:Al-Hilal,150643:Al-Zulfi']
  *       [--es panel prayers] [--es home_panel prayers,hourly,verse|none] [--es greeting on|off] [--es greetword 'عائلتي'|off] [--es greetday off|dhuhr|13|14|15] [--es greetnight off|isha|21|22|23|0] [--es adhanbar on|off] [--es yearstrip on|off] [--es minrating 7] [--es genres Drama,Comedy] [--es langs English]
  *       [--es photos 30] [--es idle 10] [--es digits hindi|latin]
- *       [--es cardstyle current|dark1|glass1|dark3|glass3] [--es national auto|off]
+ *       [--es cardstyle current|dark1|glass1|dark3|glass3|sadu|night] [--es swash off|titles|all] [--es home_rows t,b,t] [--es national auto|off]
  *       [--es markets tasi,gold,btc] [--es mkstyle arrows|prices] [--es stocks 2222,1120,AAPL]
  *       [--es leagues 'Saudi-Arabian Pro League,NBA']
  *       [--es prayeradj on|off] [--es adj_fajr +2 --es adj_dhuhr 0 --es adj_asr 0 --es adj_maghrib -1 --es adj_isha 0]   («تعديل وقت الصلاة», minutes -20..20)
@@ -213,6 +213,12 @@ public class SaverReceiver extends BroadcastReceiver {
         String cardStyle = i.getStringExtra("cardstyle");
         if (cardStyle != null && !isChoice(Prefs.CARD_STYLES, cardStyle))
             return "error: cardstyle is one of " + choices(Prefs.CARD_STYLES);
+        String swash = i.getStringExtra("swash");
+        if (swash != null && !isChoice(Prefs.SWASH, swash))
+            return "error: swash is one of " + choices(Prefs.SWASH);
+        String homeRows = i.getStringExtra("home_rows");   // t|b for places 1..3, e.g. b,t,t
+        if (homeRows != null && !homeRows.matches("[tb](,[tb]){0,2}"))
+            return "error: home_rows is t or b for each place, e.g. b,t,t";
         String mkStyle = i.getStringExtra("mkstyle");
         if (mkStyle != null && !isChoice(Prefs.MK_STYLES, mkStyle))
             return "error: mkstyle is one of " + choices(Prefs.MK_STYLES);
@@ -304,6 +310,11 @@ public class SaverReceiver extends BroadcastReceiver {
         if (digits != null) p.setDigits(digits);
         if (national != null) p.setNational(national);
         if (cardStyle != null) p.setCardStyle(cardStyle);
+        if (swash != null) p.setSwash(swash);
+        if (homeRows != null) {
+            String[] r = homeRows.split(",");
+            for (int k = 0; k < r.length; k++) p.setHomeRowAt(k, r[k]);   // a row with two already keeps the place where it was
+        }
         if (mkStyle != null) p.setMkStyle(mkStyle);
         if (markets != null) p.setMarkets(markets);
         if (stocks != null) p.setStocks(stocks);
@@ -422,6 +433,8 @@ public class SaverReceiver extends BroadcastReceiver {
             + "\ndigits: " + p.digits()
             + "\nnational: " + p.national()
             + "\ncardstyle: " + p.cardStyle()
+            + "\nswash: " + p.swash()
+            + "\nhome_rows: " + p.homeRows()
             + "\nmarkets: " + (p.markets().isEmpty() ? "none" : Prefs.join(p.markets(), ",")) + "\nmkstyle: " + p.mkStyle()
             + "\nstocks: " + Prefs.join(p.stocks(), ",")
             + "\nslot: " + p.slot()

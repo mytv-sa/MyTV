@@ -18,18 +18,22 @@ final class ConfigSnapshot {
     final boolean greetingOn, adhanBarOn;
     /** the word after the greeting ("" none), and when «طابت أيامكم» and «تصبحون على خير» start (GreetingText.start: off, dhuhr/isha, an hour) */
     final String greetWord, greetDay, greetNight;
+    /** «الحروف المرسلة»: off, titles (the greeting) or all (every Thmanyah text of the home screen) */
+    final String swash;
 
-    private ConfigSnapshot(String fragment, boolean greetingOn, boolean adhanBarOn, String greetWord, String greetDay, String greetNight) {
+    private ConfigSnapshot(String fragment, boolean greetingOn, boolean adhanBarOn, String greetWord, String greetDay, String greetNight,
+                           String swash) {
         this.fragment = fragment;
         this.greetingOn = greetingOn;
         this.adhanBarOn = adhanBarOn;
         this.greetWord = greetWord;
         this.greetDay = greetDay;
         this.greetNight = greetNight;
+        this.swash = swash;
     }
 
     static ConfigSnapshot read(Context c) {
-        String fragment = null, word = "", day = "dhuhr", night = "isha";
+        String fragment = null, word = "", day = "dhuhr", night = "isha", swash = "off";
         boolean greeting = true, bar = true;
         try (Cursor cur = c.getContentResolver().query(URI, null, null, null, null)) {
             if (cur != null && cur.moveToFirst()) {
@@ -41,11 +45,12 @@ final class ConfigSnapshot {
                 word = column(cur, "greet_word", word);
                 day = column(cur, "greet_day", day);
                 night = column(cur, "greet_night", night);
+                swash = column(cur, "swash", swash);
             }
         } catch (RuntimeException ignored) {
             // the screensaver is missing or signed with another key: the defaults (Riyadh, on)
         }
-        return new ConfigSnapshot(fragment, greeting, bar, word, day, night);
+        return new ConfigSnapshot(fragment, greeting, bar, word, day, night, swash);
     }
 
     /** a column an older screensaver does not have: the default */
