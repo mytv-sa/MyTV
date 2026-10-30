@@ -99,7 +99,8 @@ for (const [panel, [rows, title]] of Object.entries(EXPECT)) {
   const r = await p.evaluate(() => ({ n: document.querySelectorAll('#week-list li').length,
     hd: document.getElementById('week-hd').textContent, shown: getComputedStyle(document.querySelector('.week')).display !== 'none' }));
   check(`card ${panel}: no errors`, !errors.length, errors.join('; '));
-  check(`card ${panel}: ${rows} rows, title right`, r.shown && r.n === rows && (!title || r.hd === title)
+  // the prayers card is «مواقيت الغد» after Isha: this test runs at the real hour
+  check(`card ${panel}: ${rows} rows, title right`, r.shown && r.n === rows && (!title || r.hd === title || (panel === 'prayers' && r.hd === 'مواقيت الغد'))
     && (title || ['آية اليوم', 'حديث اليوم'].includes(r.hd)), JSON.stringify(r));
   await ctx.close();
 }
@@ -1451,11 +1452,12 @@ for (const [width, height] of [[461, 250], [1920, 1080], [960, 540]]) {   // lon
 }
 
 // ---- «مواقيت اليوم»: the six times as boxes; the lit one is the one the bottom panel names (the next prayer; during the iqama wait the one just
-// called; after Isha tomorrow's Fajr), the sunrise is never lit, the ones already gone are dimmed. Riyadh is UTC+3; 2026-10-23 is a Friday.
+// called; after Isha and its iqama tomorrow's six, none gone, its Fajr lit), the sunrise is never lit, the ones already gone are dimmed. Riyadh is UTC+3; 2026-10-23 is a Friday.
 {
-  const TIMES = "buildPrayers({Fajr:'04:50',Sunrise:'06:05',Dhuhr:'11:40',Asr:'15:00',Maghrib:'17:45',Isha:'19:15'});";
+  // tomorrow the same times, so after Isha the cards show them (NEXT_TIMES) and the counts below hold
+  const TIMES = "buildPrayers({Fajr:'04:50',Sunrise:'06:05',Dhuhr:'11:40',Asr:'15:00',Maghrib:'17:45',Isha:'19:15'}); NEXT_TIMES = Object.assign({}, DAY_TIMES);";
   for (const [when, lit, past, label] of [   // lit: the box (Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha = 0..5)
-      ['2026-10-22T17:58:00Z', 0, 5, '20:58 after Isha: tomorrow\'s Fajr'], ['2026-10-22T01:00:00Z', 0, 0, '04:00 before Fajr'],
+      ['2026-10-22T17:58:00Z', 0, 0, '20:58 after Isha: tomorrow\'s six, its Fajr'], ['2026-10-22T01:00:00Z', 0, 0, '04:00 before Fajr'],
       ['2026-10-21T21:30:00Z', 0, 0, '00:30 after midnight'], ['2026-10-22T02:30:00Z', 2, 1, '05:30 between Fajr and sunrise'],
       ['2026-10-22T03:30:00Z', 2, 2, '06:30 after sunrise'], ['2026-10-22T13:40:00Z', 4, 4, '16:40 Thursday'],
       ['2026-10-23T13:40:00Z', 4, 4, '16:40 Friday (الجمعة)'], ['2026-10-22T14:50:00Z', 4, 4, '17:50 the Maghrib iqama wait'],
@@ -1483,7 +1485,8 @@ for (const [width, height] of [[461, 250], [1920, 1080], [960, 540]]) {   // lon
 // ---- «تعديل وقت الصلاة» on the screensaver's page, with the fragment as the app builds it (Prefs.fragment(): the offsets come after yearstrip):
 // the card, the next-prayer panel, the adhan bar and the iqama wait all read the moved Maghrib (17:45 + 2 = 17:47), here and in the launcher's card
 {
-  const TIMES = "buildPrayers({Fajr:'04:50',Sunrise:'06:05',Dhuhr:'11:40',Asr:'15:00',Maghrib:'17:45',Isha:'19:15'});";
+  // tomorrow the same times, so after Isha the cards show them (NEXT_TIMES) and the counts below hold
+  const TIMES = "buildPrayers({Fajr:'04:50',Sunrise:'06:05',Dhuhr:'11:40',Asr:'15:00',Maghrib:'17:45',Isha:'19:15'}); NEXT_TIMES = Object.assign({}, DAY_TIMES);";
   const FRAG = 'city=%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6&lat=24.7136&lon=46.6753&tz=Asia%2FRiyadh&teams=&events=&leagues=&panel=prayers&week=1&genres=&langs=&shows=&minrating=0&photos=30&digits=hindi&cardstyle=current&adhanbar=1&yearstrip=0&adj=0,0,0,2,0&national=all&markets=tasi,spx,btc&mkstyle=arrows&stocks=&slot=matches&cd=&cdname=';
   for (const [when, label, wantCard, wantPanel, wantBar] of [
       ['2026-10-22T13:40:00Z', '16:40', '٥:٤٧ م', 'المغرب ٥:٤٧ م', ''],
@@ -1507,7 +1510,8 @@ for (const [width, height] of [[461, 250], [1920, 1080], [960, 540]]) {   // lon
 
 // ---- «الصلوات في صف»: five prayers in one row, the next lit, «المغرب بعد ١ س و ٥ د» above, with the clock held still
 {
-  const TIMES = "buildPrayers({Fajr:'04:50',Sunrise:'06:05',Dhuhr:'11:40',Asr:'15:00',Maghrib:'17:45',Isha:'19:15'});";
+  // tomorrow the same times, so after Isha the cards show them (NEXT_TIMES) and the counts below hold
+  const TIMES = "buildPrayers({Fajr:'04:50',Sunrise:'06:05',Dhuhr:'11:40',Asr:'15:00',Maghrib:'17:45',Isha:'19:15'}); NEXT_TIMES = Object.assign({}, DAY_TIMES);";
   // Riyadh is UTC+3: 13:40 UTC = 16:40 there, so Maghrib (17:45) is 1 h 5 min away; 2026-10-23 is a Friday, 2026-10-22 a Thursday
   for (const [when, next, head, label] of [
       ['2026-10-22T13:40:00Z', 3, 'المغرب بعد ١ س و ٥ د', 'Thursday afternoon'],
@@ -1534,13 +1538,13 @@ for (const [width, height] of [[461, 250], [1920, 1080], [960, 540]]) {   // lon
         });
         const tag = `prayer row ${label} ${file} ${width}x${height} ${hash.includes('widget') ? 'card ' : ''}${digits}`;
         const toLatin = s => s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-        const friday = when.startsWith('2026-10-23');
+        const friday = when.startsWith('2026-10-23') || label.startsWith('after Isha');   // after Isha: Thursday night shows Friday's
         const headWant = digits === 'latin' ? head.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)) : head;
         check(`${tag}: five prayers in order, ${friday ? 'الجمعة for Dhuhr' : 'الظهر'}, no script errors`,
           !errors.length && r.n === 5 && r.names.join() === ['الفجر', friday ? 'الجمعة' : 'الظهر', 'العصر', 'المغرب', 'العشاء'].join(), JSON.stringify(r) + errors.join('; '));
         check(`${tag}: the next one lit alone, the ones before it dimmed, «${head}» above`,
           r.next.join() === String(next) && r.hd === headWant && r.litBg[next] && r.litBg.filter(Boolean).length === 1
-          && r.past === (next === 0 ? (label.startsWith('after Isha') ? 4 : 0) : next), JSON.stringify(r));
+          && r.past === (next === 0 ? 0 : next), JSON.stringify(r));
         check(`${tag}: one line each, inside the card, ${digits} digits`, r.oneLine && r.inside && (digits === 'latin' ? r.latin && !r.ar : r.ar && !r.latin)
           && r.times.every(t => /[صم]$/.test(t)), JSON.stringify(r));
         await ctx.close();
@@ -3179,7 +3183,7 @@ for (const [w, h] of [[1920, 1080], [1280, 720], [960, 540]]) {
     check('adj: no script errors', !errors.length, errors.join('; '));
     check('adj: the offsets are read, in the order الفجر الظهر العصر المغرب العشاء', JSON.stringify(await p.evaluate(() => CONFIG.prayerAdj)) === '[0,2,0,0,-1]');
     const r = await p.evaluate(t => { eval(t); return { dh: PRAYERS.find(x => x.key === 'Dhuhr'), is: PRAYERS.find(x => x.key === 'Isha'), fa: PRAYERS.find(x => x.key === 'Fajr'),
-      sun: DAY_TIMES.Sunrise, rows: prayerRows().join('') }; }, ADHAN_TIMES);
+      sun: DAY_TIMES.Sunrise, rows: (NEXT_TIMES = null, prayerRows().join('')) }; }, ADHAN_TIMES);   // today's list, whatever the hour of the run
     check('adj: Dhuhr +2 is 11:42, Isha −1 is 19:14, the others as they were, the sunrise untouched',
       r.dh.h === 11 && r.dh.mi === 42 && r.is.h === 19 && r.is.mi === 14 && r.fa.h === 4 && r.fa.mi === 50 && r.sun === '06:05', JSON.stringify(r));
     check('adj: the prayers card lists the moved times and the sunrise as it was', /(الظهر|الجمعة)<\/span><span class="dt">١١:٤٢ ص/.test(r.rows) && /العشاء<\/span><span class="dt">٧:١٤ م/.test(r.rows) && /الشروق<\/span><span class="dt">٦:٠٥ ص/.test(r.rows), r.rows);

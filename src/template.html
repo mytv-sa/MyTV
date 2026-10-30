@@ -273,7 +273,7 @@
 
   /* «الحروف المرسلة» (#swash=): Thmanyah's swash letters, its ss01; titles = the cards' headings, all = every text. Never the
      verses: the Hafs face has its own forms */
-  html.sw-all body,html.sw-titles .week .hd,html.sw-titles #clock-sub{font-feature-settings:'ss01'}
+  html.sw-all body,html.sw-titles .week .hd,html.sw-titles #clock-sub,html.sw-titles .bottom .label{font-feature-settings:'ss01'}
   html[class*="sw-"] .week li.quote .qt{font-feature-settings:normal}
 
   /* ===== card styles (#cardstyle=; the default keeps the plain card above) =====
@@ -313,10 +313,10 @@
   /* the text keeps 16 px or more from the frame line, and the diamonds (reaching 0.71 × their side past it) never touch it */
   html.cs-dark3 .week,html.cs-glass3 .week{padding:calc(5px + .4vh + max(2.6vh,18px)) calc(5px + .4vh + max(2vw,20px))}
   /* the launcher's box is short: the header must clear the diamond on the top edge whatever its height (vh is the box's) */
-  /* the diamond (14 px, reaching 12 + 10 px in) stays clear of the centred header at 28 px; three cards still fit a short box */
-  html.widget.cs-dark3 .week,html.widget.cs-glass3 .week{padding:calc(28px*var(--z,1)) calc(22px*var(--z,1)) calc(26px*var(--z,1))}
+  /* the diamond (10 px, reaching 12 + 7 px in) stays clear of the centred header at 24 px; three cards still fit a short box */
+  html.widget.cs-dark3 .week,html.widget.cs-glass3 .week{padding:calc(24px*var(--z,1)) calc(22px*var(--z,1)) calc(22px*var(--z,1))}
   html.widget.cs-dark3 .week .frm,html.widget.cs-glass3 .week .frm{inset:calc(12px*var(--z,1))}
-  html.widget.cs-dark3 .week .dia,html.widget.cs-glass3 .week .dia{width:calc(14px*var(--z,1));height:calc(14px*var(--z,1))}
+  html.widget.cs-dark3 .week .dia,html.widget.cs-glass3 .week .dia{width:calc(10px*var(--z,1));height:calc(10px*var(--z,1))}
   html.widget.cs-dark3 .week .dia.t,html.widget.cs-glass3 .week .dia.t{top:calc(12px*var(--z,1))}
   html.widget.cs-dark3 .week .dia.b,html.widget.cs-glass3 .week .dia.b{bottom:calc(12px*var(--z,1))}
   html.cs-dark3 .week .frm,html.cs-glass3 .week .frm{display:block;position:absolute;inset:calc(5px + .4vh);z-index:0;pointer-events:none;

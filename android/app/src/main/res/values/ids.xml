@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- a settings text that is a title, for «الحروف المرسلة» in the titles only (SettingsActivity.swash) -->
+    <item name="swash_title" type="id" />
+</resources>

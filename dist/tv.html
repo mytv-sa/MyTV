@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- the build: UTC time (YYYYMMDDHHMMSS) of the newest commit of the page's sources, put in by src/build.py. The app loads the page with the newer stamp (its own
      copy or a downloaded one), never by file time, and does not keep a download whose stamp is older than its own (Updater, PageStamp). -->
-<meta name="mytv-build" content="20261030182742">
+<meta name="mytv-build" content="20261030185734">
 <title>شاشة تلفزيوني</title>
 <style>
   @font-face{font-family:'Thmanyah';font-weight:300;font-style:normal;font-display:block;src:url("https://raw.githubusercontent.com/mytv-sa/MyTV/master/assets/fonts/Thmanyah-Light.woff2") format("woff2")}
@@ -266,7 +266,7 @@
   .week .empty{color:#9A9078;font-size:calc(clamp(14px,1.1vw,21px)*var(--z,1));font-weight:300;margin-top:1vh}
 
   
-  html.sw-all body,html.sw-titles .week .hd,html.sw-titles #clock-sub{font-feature-settings:'ss01'}
+  html.sw-all body,html.sw-titles .week .hd,html.sw-titles #clock-sub,html.sw-titles .bottom .label{font-feature-settings:'ss01'}
   html[class*="sw-"] .week li.quote .qt{font-feature-settings:normal}
 
   
@@ -298,9 +298,9 @@
   html.cs-dark3 .week,html.cs-glass3 .week{padding:calc(5px + .4vh + max(2.6vh,18px)) calc(5px + .4vh + max(2vw,20px))}
   
   
-  html.widget.cs-dark3 .week,html.widget.cs-glass3 .week{padding:calc(28px*var(--z,1)) calc(22px*var(--z,1)) calc(26px*var(--z,1))}
+  html.widget.cs-dark3 .week,html.widget.cs-glass3 .week{padding:calc(24px*var(--z,1)) calc(22px*var(--z,1)) calc(22px*var(--z,1))}
   html.widget.cs-dark3 .week .frm,html.widget.cs-glass3 .week .frm{inset:calc(12px*var(--z,1))}
-  html.widget.cs-dark3 .week .dia,html.widget.cs-glass3 .week .dia{width:calc(14px*var(--z,1));height:calc(14px*var(--z,1))}
+  html.widget.cs-dark3 .week .dia,html.widget.cs-glass3 .week .dia{width:calc(10px*var(--z,1));height:calc(10px*var(--z,1))}
   html.widget.cs-dark3 .week .dia.t,html.widget.cs-glass3 .week .dia.t{top:calc(12px*var(--z,1))}
   html.widget.cs-dark3 .week .dia.b,html.widget.cs-glass3 .week .dia.b{bottom:calc(12px*var(--z,1))}
   html.cs-dark3 .week .frm,html.cs-glass3 .week .frm{display:block;position:absolute;inset:calc(5px + .4vh);z-index:0;pointer-events:none;

@@ -118,6 +118,7 @@ public class SettingsActivity extends Activity {
         title.setTextColor(0xFFF6EFE0);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 44);
         title.setTypeface(font("ThmanyahDisplay-Bold"));
+        title.setTag(R.id.swash_title, TITLE);
         head.addView(title);
         TextView sub = new TextView(this);
         sub.setText("إعدادات الواجهة الرئيسية وشاشة التوقف");
@@ -268,6 +269,22 @@ public class SettingsActivity extends Activity {
         if (keep != null) for (int i = 0; i < list.getChildCount() && back == null; i++)
             if (keep.equals(list.getChildAt(i).getTag())) back = list.getChildAt(i);
         (back != null ? back : first).requestFocus();
+        swash(list);
+    }
+
+    /** marks a text as a title, for «الحروف المرسلة» in the titles only */
+    private static final Object TITLE = new Object();
+
+    /** «الحروف المرسلة» (Thmanyah's ss01) on this screen as set: the titles («تلفزيوني», the groups, the headings) or every text */
+    private void swash(View v) {
+        String s = prefs.swash();
+        if (v instanceof TextView) {
+            boolean on = "all".equals(s) || ("titles".equals(s) && v.getTag(R.id.swash_title) == TITLE);
+            ((TextView) v).setFontFeatureSettings(on ? "'ss01'" : null);
+        } else if (v instanceof android.view.ViewGroup) {
+            android.view.ViewGroup g = (android.view.ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) swash(g.getChildAt(i));
+        }
     }
 
     /** One of the three parts of the list: its name large, and under it which screen it is for. */
@@ -280,6 +297,7 @@ public class SettingsActivity extends Activity {
         t.setTextColor(0xFFF6EFE0);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28);
         t.setTypeface(font("ThmanyahDisplay-Bold"));
+        t.setTag(R.id.swash_title, TITLE);
         g.addView(t);
         if (forWhat != null) {
             TextView s = new TextView(this);
@@ -1190,6 +1208,7 @@ public class SettingsActivity extends Activity {
         t.setTextColor(0xFFD6AF6B);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         t.setTypeface(font("Thmanyah-Medium"));
+        t.setTag(R.id.swash_title, TITLE);
         t.setPadding(dp(10), dp(18), dp(10), dp(6));
         list.addView(t);
     }
