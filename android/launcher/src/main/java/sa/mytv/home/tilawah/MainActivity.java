@@ -351,11 +351,20 @@ public class MainActivity extends Activity {
                 // the adhan section: today's times with the next one marked, then the switch and the muezzin
                 PrayerTimes times = PrayerTimes.today(MainActivity.this);
                 PrayerTimes.Next next = PrayerTimes.next(MainActivity.this);
+                // after Isha the list is tomorrow's, as the home screen's prayer cards are: its Fajr is the next one
+                Place place = Place.get(MainActivity.this);
+                java.util.Calendar day = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone(place.tz), java.util.Locale.US);
+                if (System.currentTimeMillis() > times.at[PrayerTimes.ISHA]) {
+                    day.add(java.util.Calendar.DAY_OF_MONTH, 1);
+                    times = PrayerTimes.of(day, place);
+                }
+                boolean friday = day.get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.FRIDAY;
                 for (int prayer : PrayerTimes.PRAYERS) {
                     boolean isNext = next != null && next.index == prayer;
                     String detail = PrayerTimes.clock12(times.clock[prayer]);
                     if (isNext) detail += "  •  " + PrayerTimes.remaining(next.at - System.currentTimeMillis());
-                    rows.add(new Row(false, KIND_PRAYER, PrayerTimes.NAMES[prayer], detail, prayer, isNext));
+                    String name = friday && prayer == PrayerTimes.DHUHR ? "الجمعة" : PrayerTimes.NAMES[prayer];
+                    rows.add(new Row(false, KIND_PRAYER, name, detail, prayer, isNext));
                 }
                 String mode = prefs.adhanMode();
                 String toggle = getString(Prefs.MODE_SOUND.equals(mode) ? R.string.adhan_on
