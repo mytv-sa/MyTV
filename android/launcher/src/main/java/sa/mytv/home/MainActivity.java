@@ -395,10 +395,14 @@ public class MainActivity extends Activity {
 
         date = text(14, "regular", 0xFFC6BBA4);
         date.setSingleLine(true);
+        // Thmanyah's last letter of a line (the ر of «أكتوبر») reaches left past its width: room for it, or the view cuts it off
+        date.setPadding(dp(8), 0, 0, 0);
+        weatherLine.setPadding(dp(8), 0, 0, 0);
         left.addView(date, llp(-2, -2, 0, dp(-6), dp(4), 0));   // the display font leaves a deep gap under its digits
         // «بتوقيت دبي», only when the city's clock is not the TV's (as the screensaver's line under its clock)
         zoneLine = text(12, "regular", GOLD);
         zoneLine.setSingleLine(true);
+        zoneLine.setPadding(dp(8), 0, 0, 0);   // as the date's: the tail of its last letter
         zoneLine.setVisibility(View.GONE);
         left.addView(zoneLine, llp(-2, -2, 0, dp(1), dp(4), 0));
         for (TextView t : new TextView[]{greeting, weatherLine, clock, ampm, date, zoneLine}) t.setShadowLayer(dp(3), 0, dp(1), 0x80000000);

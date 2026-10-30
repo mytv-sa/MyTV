@@ -1214,10 +1214,11 @@ const crestNet = seen => r => {
   r.fulfill({ contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' }, body: badgePng });
   return true;
 };
+// the games' times are counted in the page, from its clock: a page with a fixed time (HOME_NOW) is days away from this one's
 const CREST_GAMES = (names) => `NEXT_LIST = { '136013': ${JSON.stringify(names.map(([h, a, hb, ab], i) => ({
   idEvent: 'c' + i, strHomeTeam: h, strAwayTeam: a, idHomeTeam: String(100 + 2 * i), idAwayTeam: String(101 + 2 * i),
-  strHomeTeamBadge: hb ? BADGE(100 + 2 * i) : null, strAwayTeamBadge: ab ? BADGE(101 + 2 * i) : null,
-  strTimestamp: new Date(Date.now() + (3 + 30 * i) * 36e5).toISOString() })))} };`;
+  strHomeTeamBadge: hb ? BADGE(100 + 2 * i) : null, strAwayTeamBadge: ab ? BADGE(101 + 2 * i) : null })))}
+  .map((g, i) => Object.assign(g, { strTimestamp: new Date(Date.now() + (3 + 30 * i) * 36e5).toISOString() })) };`;
 const SHORT_GAMES = [['Al-Hilal', 'Al-Nassr', true, true], ['Al-Ahli', 'Al-Ittihad', true, false]];   // the second game's guest has no crest
 const LONG_GAMES = [['Manchester United', 'Borussia Monchengladbach', true, true], ['Paris Saint-Germain', 'Bayern Munich', true, true],
                     ['Real Madrid', 'Manchester City', true, true]];
