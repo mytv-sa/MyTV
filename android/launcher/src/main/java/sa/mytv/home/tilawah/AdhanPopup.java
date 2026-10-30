@@ -51,8 +51,10 @@ final class AdhanPopup {
         MAIN.post(() -> {
             PrayerTimes t = PrayerTimes.today(c);
             long at = dhuhr > 0 ? dhuhr : t.at[PrayerTimes.DHUHR];
-            // the time left as it is now, not «ساعتين» always: an alarm Android delivered late says so
-            String title = "صلاة الجمعة " + PrayerTimes.remaining(at - System.currentTimeMillis());
+            // the time left as it is now, not «ساعتين» always: an alarm Android delivered late says so. A Jumu'ah already past (only
+            // music.sh jumuah now, after Dhuhr) reads as the reminder would: two hours before
+            long left = at - System.currentTimeMillis();
+            String title = "صلاة الجمعة " + PrayerTimes.remaining(left > 60_000 ? left : JumuahScheduler.BEFORE);
             present(c, "تذكير الجمعة", title, "الأذان " + PrayerTimes.clock12(t.clock[PrayerTimes.DHUHR]), JUMUAH_SUNNAHS);
         });
     }
