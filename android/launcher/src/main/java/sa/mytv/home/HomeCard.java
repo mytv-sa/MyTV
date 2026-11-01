@@ -52,6 +52,7 @@ final class HomeCard {
     private View target;
     private FrameLayout.LayoutParams targetParams;
     private final Live live;
+    private boolean resumed;   // between refresh() and pause(): a read that ends after an app came to the front leaves the page paused
 
     HomeCard(Activity activity, ViewGroup parent, FrameLayout.LayoutParams params, Sizer sizer, Live live) {
         this.activity = activity;
@@ -75,18 +76,37 @@ final class HomeCard {
         placeTarget();
     }
 
-    /** onResume: follow the current settings; a changed choice gets a fresh page. */
-    void refresh() {
-        String want = readUrl();
-        if (want == null) { destroy(); return; }
-        if (!want.equals(url)) { destroy(); create(want); }
-        web.onResume();
-        web.resumeTimers();
+    /**
+     * onResume: follow the current settings; a changed choice gets a fresh page. The settings are another app's (its provider), read
+     * on `bg`, not the main thread: when the TV had closed the screensaver app to free memory, that read starts it again, and Home froze
+     * for it. Then `done` runs on the main thread (the «المهام» target may have come or gone).
+     */
+    void refresh(java.util.concurrent.Executor bg, final Runnable done) {
+        resumed = true;
+        bg.execute(() -> {
+            final Want w = readUrl();
+            activity.runOnUiThread(() -> {
+                if (activity.isDestroyed()) return;
+                if (w.url == null) destroy();
+                else {
+                    if (!w.url.equals(url)) { destroy(); cards = w.cards; tasks = w.tasks; create(w.url); }
+                    if (resumed) { web.onResume(); web.resumeTimers(); }
+                }
+                done.run();
+            });
+        });
     }
 
     /** onPause: no timers or network while an app is in front. */
     void pause() {
+        resumed = false;
         if (web != null) { web.onPause(); web.pauseTimers(); }
+    }
+
+    /** What the settings ask for: the page, the cards its box is sized for, and whether «المهام» is one of them. */
+    private static final class Want {
+        final String url; final int cards; final boolean tasks;
+        Want(String url, int cards, boolean tasks) { this.url = url; this.cards = cards; this.tasks = tasks; }
     }
 
     void destroy() {
@@ -98,7 +118,7 @@ final class HomeCard {
         url = null;
     }
 
-    private String readUrl() {
+    private Want readUrl() {
         String frag = null, panel = null, rows = null;
         try (Cursor c = activity.getContentResolver().query(CONFIG, null, null, null, null)) {
             if (c != null && c.moveToFirst()) {
@@ -122,9 +142,8 @@ final class HomeCard {
         // before this app): keep the last cards chosen, «بدون» included. Only with nothing remembered, the prayers.
         String[] choice = HomeCardChoice.pick(frag, panel, sp.getString("frag", null), sp.getString("panel", null));
         // a card in the bottom row needs the whole height down to the apps, as two or three cards always had
-        cards = HomeCardChoice.boxCards(HomeCardChoice.count(choice), rows);
-        tasks = HomeCardChoice.hasTasks(choice);
-        return HomeCardChoice.withRows(HomeCardChoice.liveUrl(choice), rows);
+        return new Want(HomeCardChoice.withRows(HomeCardChoice.liveUrl(choice), rows),
+            HomeCardChoice.boxCards(HomeCardChoice.count(choice), rows), HomeCardChoice.hasTasks(choice));
     }
 
     @SuppressLint("SetJavaScriptEnabled")

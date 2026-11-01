@@ -217,14 +217,17 @@ Other sports: the NBA and NFL are leagues like the football ones (their teams ar
 (`.github/workflows/league-fixtures.yml`, every 6 hours, by hand too, never on a push) writes each league's games of the coming week and
 the last day and a half into one file, `leagues/<slug>.json` on the branch `data-leagues` (`.github/tools/league_fixtures.py`: `eventsday.php` for each day,
 plus `eventsnextleague.php` and `eventspastleague.php`, because the free league calls are capped; the run's `leagues/report.json` says what each answered).
-The screen downloads one file per followed league every 30 minutes (1 request each); a game under way is refreshed with `lookupevent.php` every
-2 minutes (at most 6 league games at once, none twice). The league's games and the followed teams' are shown in one time order, a game
+The screen downloads one file per followed league every 30 minutes (1 request each). A game under way (a followed team's, and at most 6 league
+games at once, none twice) is refreshed every 30 s from ESPN's public scoreboard of its league (`site.api.espn.com`, no key; one request per
+league and day, the game found by kick-off and both teams' names); one ESPN does not have, or when ESPN fails, falls back to `lookupevent.php`
+every 2 minutes. The league's games and the followed teams' are shown in one time order, a game
 once even when both follow it; the slot pages two a time (every 15 s, 10 s once there are more than 3 pages, so a round of 9 passes in under a minute), the card beside the clock four rows. Only the
 league's own file is read, so a club that is in two leagues (Abha: the Pro League and Division 1) shows only in the one it plays in this season.
 A game is always one line: when two long names do not fit side by side the pair goes one to a page.
 
 **Data** (free, no keys): Aladhan (prayer times, Umm al-Qura), Open-Meteo (weather), Yahoo and CoinGecko (markets),
-TVMaze (episodes), TheSportsDB (matches). Everything fails soft: offline, the clock, dates, prayer and Ramadan
+TVMaze (episodes; their Arabic names from Wikidata by TVMaze or IMDb id, kept on the TV, the English one when it has none),
+TheSportsDB (matches), ESPN (live scores). Everything fails soft: offline, the clock, dates, prayer and Ramadan
 countdowns still work and the last good data stays on screen. A finished game's score stays up for a day.
 
 **Verse and hadith texts are never typed by hand:** verses come from the Quran API via CI

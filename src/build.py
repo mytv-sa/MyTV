@@ -291,6 +291,8 @@ def main():
     html = (ROOT / "src/template.html").read_text(encoding="utf-8").replace("__BUILD__", build_stamp())
     # the stylesheet's comments are for whoever edits the template: not shipped (tv.html has a size limit, tests/check.py)
     html = re.sub(r"<style>.*?</style>", lambda m: re.sub(r"/\*.*?\*/", "", m.group(0), flags=re.S), html, count=1, flags=re.S)
+    # so are the script's whole-line comments (a comment after code stays: a // can be inside a string or a URL there)
+    html = re.sub(r"<script>.*?</script>", lambda m: re.sub(r"(?m)^[ \t]*//.*\n", "", m.group(0)), html, count=1, flags=re.S)
     # 2 KB, so inlined in both pages
     html = html.replace("__F_MARKS__", data_uri(ROOT / "assets/fonts/NotoNaskhArabic-Marks.woff2", "font/woff2"))
     teams = json.loads((ROOT / "assets/shared/teams-ar.json").read_text(encoding="utf-8"))

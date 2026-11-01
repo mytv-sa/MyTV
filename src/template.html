@@ -356,11 +356,14 @@
   html.widget.cs-glass3 .week::before{background:linear-gradient(135deg,rgba(16,40,28,.66),rgba(8,20,14,.54) 50%,rgba(30,26,12,.58))}
   html.widget[class*="cs-"] .week{box-shadow:none}
 
-  /* ليلية: deep night blue, a faint gold glow in the top corner on the clock's side, a gold hairline at the top */
-  html.cs-night .week{border-radius:24px;border-color:rgba(var(--gold-rgb),.22);box-shadow:0 20px 50px rgba(0,0,0,.35)}
-  html.cs-night .week::before{background:linear-gradient(160deg,rgba(14,22,48,.80),rgba(8,12,30,.74) 55%,rgba(18,16,12,.70))}
-  html.cs-night .week::after{background:radial-gradient(55% 45% at 100% 0%,rgba(var(--gold-rgb),.16),transparent 70%);
-    box-shadow:inset 0 1px 0 rgba(var(--gold-rgb),.45)}
+  /* ليلية: a clear night blue (beside «داكنة» on a TV the first, greyer blue read as the same card), faint stars, a gold glow in the
+     top corner on the clock's side, a whole gold border with a brighter line at the top */
+  html.cs-night .week{border-radius:24px;border-color:rgba(var(--gold-rgb),.42);box-shadow:0 20px 50px rgba(0,0,0,.35)}
+  html.cs-night .week::before{background:linear-gradient(160deg,rgba(18,34,86,.88),rgba(10,18,52,.84) 55%,rgba(8,12,36,.82))}
+  html.cs-night .week::after{
+    background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='120'><g fill='%23F3E6C4'><circle cx='14' cy='22' r='.9' opacity='.55'/><circle cx='61' cy='9' r='.7' opacity='.4'/><circle cx='97' cy='47' r='1' opacity='.5'/><circle cx='142' cy='18' r='.8' opacity='.45'/><circle cx='33' cy='83' r='.7' opacity='.35'/><circle cx='121' cy='96' r='.9' opacity='.4'/><circle cx='168' cy='70' r='.7' opacity='.35'/><circle cx='76' cy='108' r='.6' opacity='.3'/></g></svg>") repeat,
+      radial-gradient(55% 45% at 100% 0%,rgba(var(--gold-rgb),.22),transparent 70%);
+    box-shadow:inset 0 1px 0 rgba(var(--gold-rgb),.65)}
 
   /* «يُتلى الآن»: a small card at the top centre while the Quran or a radio station plays; it takes the style of the card beside the clock
      (the rules above are on .week) and sits over the stage, out of its grid */
@@ -523,10 +526,11 @@
   .p-prayer.now .big{color:var(--gold-hi);text-shadow:0 0 40px rgba(var(--gold-rgb),.45)}
   .p-prayer.now .label{color:#F1CF8A}
   .live{color:#EE8B70;font-weight:500}
-  /* the bar before the adhan: slim, at the very top, across the screen; the header starts below it (3.1vh) */
-  .adbar{position:fixed;left:0;right:0;top:0;height:2.9vh;min-height:16px;z-index:6;display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(90deg,rgba(var(--gold-rgb),0),rgba(var(--gold-rgb),.34) 30%,rgba(var(--gold-rgb),.34) 70%,rgba(var(--gold-rgb),0));
-    color:var(--gold-hi);font-size:clamp(11px,1.1vw,21px);font-weight:500;letter-spacing:.04em;white-space:nowrap;pointer-events:none}
+  /* the bar before the adhan: a gold pill in the middle of the header's row, as on the home screen. Not on the top edge: a TV
+     crops a few percent of each edge (overscan), and the bar there was cut. Under «يُتلى الآن» when that card is up (tickAdhanBar) */
+  .adbar{position:fixed;left:50%;top:calc(3.1vh + 4px);transform:translateX(-50%);z-index:6;display:flex;align-items:center;
+    padding:.5vh max(1.6vw,16px);border-radius:999px;background:rgba(var(--gold-rgb),.40);border:1px solid rgba(var(--gold-rgb),.60);
+    color:#FFE9B8;font-size:clamp(12px,1.15vw,22px);line-height:1.5;font-weight:500;white-space:nowrap;pointer-events:none}
   .adbar[hidden]{display:none}
   html.widget .adbar{display:none}
   .dimmer{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:30;transition:opacity 6s linear}
@@ -639,6 +643,7 @@ const _num = (k, d) => { const v = parseFloat(_Q.get(k)); return isNaN(v) ? d : 
 const _tzOk = z => { try{ new Intl.DateTimeFormat('en',{timeZone:z}); return true; }catch(e){ return false; } };
 // the cards a slot can show (Prefs.PANELS in the app is the same list); «none» is the absence of one
 const CARD_KINDS = ['shows','prayers','forecast','hourly','prayerrow','matches','verse','wisdom','adhkar','stocks','tasks','year','smart','today'];
+const CARD_STYLES = ['dark1','glass1','dark3','glass3','sadu','night'];   // «شكل البطاقة»; anything else is the plain card
 const CONFIG = {
   city: _Q.get('city') || 'الرياض',
   latitude: _num('lat', 24.7136),
@@ -687,7 +692,7 @@ const CONFIG = {
   // digits everywhere: #digits=hindi (١٢٣, the default) or latin (123); anything else = hindi
   digits: _Q.get('digits') === 'latin' ? 'latin' : 'hindi',
   // the look of the card beside the clock: #cardstyle=current|dark1|glass1|dark3|glass3|sadu|night (anything else = current)
-  cardStyle: (v => ['dark1','glass1','dark3','glass3','sadu','night'].includes(v) ? v : 'current')(_Q.get('cardstyle')),
+  cardStyle: (v => CARD_STYLES.includes(v) ? v : 'current')(_Q.get('cardstyle')),
   // «الحروف المرسلة», Thmanyah's swash letters (its ss01): #swash=off|titles|all (anything else = off)
   swash: (v => ['titles','all'].includes(v) ? v : 'off')(_Q.get('swash')),
   // the markets at the top left: #markets=tasi,spx,btc (up to 4 of tasi aramco spx btc gold silver xrp; none = no markets line;
@@ -981,7 +986,10 @@ function tickAdhanBar(){
   const bar = document.getElementById('adbar'), t = adhanBarText();
   if(!bar) return;
   bar.hidden = !t;
-  if(t) setText(bar, t);
+  if(!t) return;
+  setText(bar, t);
+  const np = document.querySelector('.stage > .week.np:not([hidden])'), top = np ? Math.ceil(np.getBoundingClientRect().bottom + 8) + 'px' : '';
+  if(bar.style.top !== top) bar.style.top = top;
 }
 
 function tickPrayer(){
@@ -1409,7 +1417,65 @@ function liveStatus(ev, t12){
   return isNaN(m) || (ev.strSport && ev.strSport !== 'Soccer') ? `بدأت ${t12}` : `الدقيقة ${ar(m)}`;   // minutes are football's
 }
 
-// while a picked team is playing, refresh that event every 2 minutes; so is a game of a followed league (a few at most)
+// ---- live scores: ESPN first, TheSportsDB behind it ----
+// TheSportsDB's free key posts a goal minutes late. ESPN's public scoreboard (no key, open to the page, cached 5 s) has it within the
+// minute: while a game is on, its league's scoreboard is read every LIVE_MS and the game is found in it by kick-off and both teams'
+// names. A game ESPN does not have (a league not in ESPN_SLUG, names that do not match) or a failed request falls back to
+// lookupevent.php, no more often than every TSDB_LIVE_MS, as before.
+const LIVE_MS = 30000, TSDB_LIVE_MS = 2*60000;
+let TSDB_LIVE_AT = 0;
+const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/';
+const ESPN_SLUG = {4668:'ksa.1', 4328:'eng.1', 4335:'esp.1', 4480:'uefa.champions', 4481:'uefa.europa', 4719:'afc.champions',
+  4562:'fifa.friendly', 4429:'fifa.world', 4482:'eng.fa', 4570:'eng.league_cup', 4483:'esp.copa_del_rey'};   // TheSportsDB idLeague -> ESPN
+const espnSlug = ev => { const n = ev.strLeague || ''; return ESPN_SLUG[ev.idLeague] || (/saudi.*king/i.test(n) ? 'ksa.kings_cup'
+  : /saudi.*super/i.test(n) ? 'ksa.super_cup' : /asian cup/i.test(n) ? 'afc.asian.cup' : /world cup qual.*(afc|asia)/i.test(n) ? 'fifa.worldq.afc' : ''); };
+// «Al-Nassr» and «Al Nassr», «Wolverhampton Wanderers» and «Wolverhampton»: the same team when a real word of the name is shared
+const NAME_SKIP = ['fc', 'cf', 'sc', 'afc', 'club', 'the', 'and', 'de', 'del'];
+const nameWords = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z0-9]+/)
+  .filter(w => w.length >= 3 && !NAME_SKIP.includes(w));
+const sameTeam = (a, b) => { const y = new Set(nameWords(b)); return nameWords(a).some(w => y.has(w)); };
+// ESPN's word on a game in TheSportsDB's fields (what the cards read), home and away as TheSportsDB has them; null before kick-off
+function espnFields(e, home, away){
+  const st = (e.status && e.status.type) || {}, name = st.name || '';
+  if(st.state === 'pre') return null;
+  if(/POSTPONED|CANCEL|ABANDON|SUSPEND/.test(name)) return {strStatus: /POSTPONED/.test(name) ? 'POSTP' : 'CANC'};
+  const out = {intHomeScore: String(parseInt(home.score, 10) || 0), intAwayScore: String(parseInt(away.score, 10) || 0)};
+  if(name === 'STATUS_HALFTIME') out.strStatus = 'HT';
+  else if(st.state === 'post') out.strStatus = /PEN|SHOOTOUT/.test(name) ? 'PEN' : /AET|EXTRA/.test(name) ? 'AET' : 'FT';
+  else{
+    out.strStatus = name === 'STATUS_FIRST_HALF' ? '1H' : name === 'STATUS_SECOND_HALF' ? '2H' : 'LIVE';
+    const m = parseInt(e.status.displayClock, 10);   // «36'», «90'+6'» -> 90
+    if(!isNaN(m)) out.strProgress = String(m);
+  }
+  return out;
+}
+// -> Map idEvent -> the fields ESPN has for it; one scoreboard per league and day, whatever the number of games in it
+async function espnLive(evs){
+  const out = new Map(), boards = {};
+  for(const ev of evs){
+    const slug = espnSlug(ev), k = toDate(ev).getTime();
+    if(!slug || isNaN(k)) continue;
+    const day = new Date(k - 5*3600000).toISOString().slice(0, 10).replace(/-/g, '');   // ESPN's days are US Eastern
+    const key = slug + day;
+    if(!(key in boards)) boards[key] = await fetchT(`${ESPN_BASE}${slug}/scoreboard?dates=${day}`, 10000)
+      .then(r => r.ok ? r.json() : null).then(j => (j && j.events) || null).catch(() => null);
+    for(const e of boards[key] || []){
+      if(!(Math.abs(Date.parse(e.date) - k) <= 3*3600000)) continue;
+      const cs = (e.competitions && e.competitions[0] && e.competitions[0].competitors) || [];
+      const h = cs.find(c => c.homeAway === 'home'), a = cs.find(c => c.homeAway === 'away');
+      if(!h || !a || !h.team || !a.team) continue;
+      const hn = h.team.displayName, an = a.team.displayName;
+      const straight = sameTeam(ev.strHomeTeam, hn) && sameTeam(ev.strAwayTeam, an);
+      if(!straight && !(sameTeam(ev.strHomeTeam, an) && sameTeam(ev.strAwayTeam, hn))) continue;   // a neutral ground may swap them
+      const f = straight ? espnFields(e, h, a) : espnFields(e, a, h);
+      if(f) out.set(ev.idEvent, f);
+      break;
+    }
+  }
+  return out;
+}
+
+// while a picked team is playing, refresh that event every LIVE_MS; so is a game of a followed league (a few at most)
 const loadLive = guarded('live', async function(){
   const now = Date.now();
   let asked = false;
@@ -1425,16 +1491,27 @@ const loadLive = guarded('live', async function(){
     }catch(e){ return null; }
   };
   const theirs = CONFIG.leagues.length ? leagueGames().filter(ev => live(ev) && !own.has(ev.idEvent)).slice(0, LEAGUE_LIVE_MAX) : [];
+  const fast = await espnLive([...Object.values(MATCHES).filter(ev => live(ev)), ...theirs]);
+  if(fast.size) asked = true;
+  Object.entries(MATCHES).forEach(([id, ev]) => {
+    if(!live(ev) || !fast.has(ev.idEvent)) return;
+    MATCHES[id] = Object.assign({}, ev, fast.get(ev.idEvent));
+    keepResult(id, MATCHES[id]);
+  });
+  theirs.forEach(ev => { if(fast.has(ev.idEvent)) LIVE_PATCH[ev.idEvent] = {at: Date.now(), ev: fast.get(ev.idEvent)}; });
+  const slow = now - TSDB_LIVE_AT >= TSDB_LIVE_MS - 5000;   // TheSportsDB for what ESPN did not have, at its old pace
   // a game 6 h past kick-off with no result: ask once; the answer (or none) is what the screen shows from then on
   const stale = matchEvents().filter(ev => !STALE_ASKED.has(ev.idEvent) && now - toDate(ev).getTime() > STALE_ASK_H * 3600000 && pendingResult(ev, now)).slice(0, LEAGUE_LIVE_MAX);
   stale.forEach(ev => STALE_ASKED.add(ev.idEvent));
   const jobs = [   // one lookup at a time, a pause between
     ...Object.entries(MATCHES).map(([id, ev]) => async () => {
-      if(!live(ev)) return;
+      if(!live(ev) || fast.has(ev.idEvent) || !slow) return;
+      TSDB_LIVE_AT = now;
       const fresh = await look(ev);
       if(fresh){ MATCHES[id] = Object.assign({}, ev, fresh); keepResult(id, MATCHES[id]); }
     }),
-    ...theirs.map(ev => async () => {
+    ...theirs.filter(ev => !fast.has(ev.idEvent) && slow).map(ev => async () => {
+      TSDB_LIVE_AT = now;
       const fresh = await look(ev);
       if(fresh) LIVE_PATCH[ev.idEvent] = {at: Date.now(), ev: fresh};
     }),
@@ -2057,7 +2134,7 @@ const loadWeek = guarded('week', async function(){
     seen.add(s.name);
     const prem = e.number === 1;
     out.push({
-      name: s.name,
+      name: s.name, tvm: s.id ? String(s.id) : '', imdb: (s.externals && s.externals.imdb) || '',
       ep: e.season ? (prem ? `الموسم ${ar(e.season)}` : `الموسم ${ar(e.season)} · ح ${ar(e.number)}`) : '',
       date: e.airdate || '',
       rating: (s.rating && s.rating.average) || 0,
@@ -2105,7 +2182,37 @@ const loadWeek = guarded('week', async function(){
   WEEK_OK_AT = Date.now(); WEEK_FAIL_AT = 0;
   WEEK_LOADED = true;
   renderPanel(false, 'shows');
+  if(await loadShowNames(WEEK_POOL)) renderPanel(false, 'shows');
 });
+
+// «جديد المسلسلات» in Arabic: TVmaze has English names only, Wikidata has the Arabic one of many shows (its TVmaze id, P8600, or its
+// IMDb id, P345). One request for the shows not asked about before; the answers, and the misses ('' = keep the English), stay on the TV.
+const SHOW_AR_MAX = 600;
+let SHOW_AR = (()=>{ try{ return JSON.parse(localStorage.getItem('showAr') || '{}') || {}; }catch(e){ return {}; } })();
+const showName = o => SHOW_AR['m' + o.tvm] || SHOW_AR[o.imdb] || o.name;
+async function loadShowNames(list){
+  const tvm = [...new Set(list.filter(o => /^\d+$/.test(o.tvm) && !(('m' + o.tvm) in SHOW_AR)).map(o => o.tvm))];
+  const imdb = [...new Set(list.filter(o => /^tt\d+$/.test(o.imdb) && !(o.imdb in SHOW_AR)).map(o => o.imdb))];
+  if(!tvm.length && !imdb.length) return false;
+  const vals = a => a.map(k => '"' + k + '"').join(' ');
+  const q = `SELECT ?k ?l WHERE { { VALUES ?k { ${vals(tvm)} } ?i wdt:P8600 ?k } UNION { VALUES ?k { ${vals(imdb)} } ?i wdt:P345 ?k }`
+          + ` ?i rdfs:label ?l. FILTER(LANG(?l) = "ar") }`;
+  try{
+    const r = await fetchT('https://query.wikidata.org/sparql?format=json&query=' + encodeURIComponent(q), 15000);
+    if(!r.ok) return false;
+    const got = {};
+    ((await r.json()).results.bindings || []).forEach(b => {
+      const l = b.l && b.l.value.trim();
+      if(l && /[\u0600-\u06FF]/.test(l) && l.length <= 60) got[b.k.value] = l;   // an «Arabic» label in Latin letters is no better
+    });
+    tvm.forEach(k => { SHOW_AR['m' + k] = got[k] || ''; });
+    imdb.forEach(k => { SHOW_AR[k] = got[k] || ''; });
+    const keys = Object.keys(SHOW_AR);
+    if(keys.length > SHOW_AR_MAX) keys.slice(0, keys.length - SHOW_AR_MAX).forEach(k => delete SHOW_AR[k]);   // the oldest go first
+    try{ localStorage.setItem('showAr', JSON.stringify(SHOW_AR)); }catch(e){}
+    return Object.keys(got).length > 0;
+  }catch(e){ return false; }
+}
 
 const WEEK_ROWS = 5;
 const MATCH_ROWS = 4;   // the games card: each game takes two lines (teams, date and time)
@@ -2128,7 +2235,7 @@ function renderWeekPage(card, animate){
   }
   setHTML(ul, rows.map(o=>{
     const dt = o.date ? new Intl.DateTimeFormat(GREG,{timeZone:CONFIG.timezone,weekday:'short'}).format(new Date(o.date+'T12:00:00Z')) : '';
-    return `<li><span>${esc(o.name)}</span>`
+    return `<li><span>${esc(showName(o))}</span>`
          + (o.ep?`<span class="ep">${ar(o.ep)}</span>`:'')
          + (o.rating ? `<span class="rt">${ar(o.rating.toFixed(1)).replace('.', LATIN ? '.' : '٫')}</span>` : '')
          + (dt?`<span class="dt">${dt}</span>`:'') + '</li>';
@@ -3224,13 +3331,14 @@ function nowPlayingTick(){
   let s = null;
   try{ const raw = window.MytvNative && window.MytvNative.nowPlaying(); s = raw ? JSON.parse(raw) : null; }catch(e){}
   const title = s && typeof s.title === 'string' ? s.title.trim() : '', who = s && typeof s.who === 'string' ? s.who.trim() : '';
-  if(!title){ card.hidden = true; return; }
+  if(!title){ if(!card.hidden){ card.hidden = true; tickAdhanBar(); } return; }   // the adhan pill goes back up
   setText(document.getElementById('np-t'), title);
   setText(document.getElementById('np-w'), who);
   document.getElementById('np-s').hidden = !who;
   card.hidden = false;
   const line = document.getElementById('np-l');
   FIT_STEPS.concat([.64, .56]).find(k => { line.style.fontSize = k === 1 ? '' : k + 'em'; return card.getBoundingClientRect().width <= innerWidth * .42; });
+  tickAdhanBar();   // the adhan pill sits under the card
 }
 
 function boot(){
@@ -3278,7 +3386,7 @@ function boot(){
     const turn = () => { renderMatches(true); setTimeout(turn, CONFIG.leagues.length && MATCH_PAGES > 3 ? CONFIG.matchPageFastMs : CONFIG.matchPageMs); };
     setTimeout(turn, CONFIG.matchPageMs);
   }
-  if(NEEDS_MATCHES){ periodic(loadLive, 2*60000); periodic(loadMatches, 30*60*1000); }
+  if(NEEDS_MATCHES){ setInterval(loadLive, LIVE_MS); periodic(loadMatches, 30*60*1000); }   // loadLive asks nothing while no game is on
   periodic(loadPrayers, 6*3600*1000);
   periodic(loadMarkets, 15*60*1000);
   if(USES('shows')) periodic(loadWeek, 6*3600*1000);
@@ -3297,6 +3405,20 @@ function boot(){
 }
 
 // The launcher's cards: the chosen ones only (up to three), refreshed like on the screensaver, nothing else loaded.
+// the settings' «شكل البطاقة» and «الحروف المرسلة» pickers: the look under the cursor in the page already open, not a new load of the
+// whole page per choice (the app falls back to loading it when this is missing, on an older page). Both looks are classes on <html>.
+window.mytvLook = (cs, sw) => {
+  const h = document.documentElement;
+  CONFIG.cardStyle = CARD_STYLES.includes(cs) ? cs : 'current';
+  CONFIG.swash = ['titles', 'all'].includes(sw) ? sw : 'off';
+  [...h.classList].forEach(c => { if(/^(cs|sw)-/.test(c)) h.classList.remove(c); });
+  if(CONFIG.cardStyle !== 'current') h.classList.add('cs-' + CONFIG.cardStyle);
+  if(CONFIG.swash !== 'off') h.classList.add('sw-' + CONFIG.swash);
+  CARDS.forEach(c => { c.ul.__h = null; });
+  renderPanel(false);   // another padding: drawn and fitted again from full size
+  return 1;
+};
+
 function bootWidget(){
   document.documentElement.classList.add('widget');
   if(CONFIG.cardStyle !== 'current') document.documentElement.classList.add('cs-' + CONFIG.cardStyle);   // «شكل البطاقة» applies to each of them
@@ -3314,7 +3436,7 @@ function bootWidget(){
   renderPanel(false, ...CARD_KINDS.filter(k => k !== 'shows'));
   if(USES('adhkar') || USES('prayers') || USES('prayerrow')){ loadPrayers(); periodic(loadPrayers, 6*3600*1000); }
   if(USES('forecast') || USES('hourly')){ loadWeather(); periodic(loadWeather, 30*60*1000); }
-  if(USES('matches')){ loadMatches(); periodic(loadMatches, 30*60*1000); periodic(loadLive, 2*60000); }
+  if(USES('matches')){ loadMatches(); periodic(loadMatches, 30*60*1000); setInterval(loadLive, LIVE_MS); }
   if(USES('stocks')){ loadMarkets(); periodic(loadMarkets, 15*60*1000); }
   cardTimers();
   let lastDay = riyadhDayNumber();

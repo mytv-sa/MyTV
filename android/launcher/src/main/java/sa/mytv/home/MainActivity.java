@@ -121,6 +121,10 @@ public class MainActivity extends Activity {
     private TextView adhanBar;   // «الأذان بعد ٨ دقائق», over the top edge
     private View clockBlock, bottomBlock;   // the greeting, clock and date; the app title and the dock under it
 
+    // Reads of the screensaver app's settings (its ConfigProvider) run here, one at a time and in order, never on the main thread:
+    // when the TV has closed that app to free memory, a read starts it again (a few hundred ms), and Home froze on its way back.
+    private final java.util.concurrent.ExecutorService bg = java.util.concurrent.Executors.newSingleThreadExecutor();
+
     private final BroadcastReceiver tick = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
             updateClock();
@@ -182,8 +186,7 @@ public class MainActivity extends Activity {
         updateClock();
         updateWifi();
         updateNowPlaying();
-        homeCard.refresh();
-        wireFocus();   // the «المهام» card may have come or gone with the settings
+        homeCard.refresh(bg, this::wireFocus);   // the «المهام» card may have come or gone with the settings
         View last = lastFocusedId == View.NO_ID ? null : findViewById(lastFocusedId);
         if (last == null && !dockCards.isEmpty()) last = dockCards.get(0);
         if (last != null) last.requestFocus();
@@ -214,6 +217,7 @@ public class MainActivity extends Activity {
         unregisterReceiver(sleepChanged);
         unregisterReceiver(nowPlayingChanged);
         homeCard.destroy();
+        bg.shutdown();
         super.onDestroy();
     }
 
@@ -915,12 +919,21 @@ public class MainActivity extends Activity {
     private SimpleDateFormat gregFormat;
     private String formatZone = "";
 
+    /** One read of the screensaver's settings (its ConfigProvider, same signing key) for the whole tick, on `bg`; then showClock. */
     private void updateClock() {
+        bg.execute(() -> {
+            final ConfigSnapshot cfg = ConfigSnapshot.read(this);
+            Digits.remember(this, cfg);   // a change of the setting reaches the next tick
+            final String bar = AdhanBar.text(this, cfg);
+            sa.mytv.home.tilawah.AdhanSync.onConfig(this, cfg.fragment);   // «تعديل وقت الصلاة» changed on the TV: the alarm follows
+            runOnUiThread(() -> { if (!isDestroyed()) showClock(cfg, bar); });
+        });
+    }
+
+    /** null zone = the screensaver's settings are missing: the TV's own. bar: the adhan bar's words, or null. */
+    private void showClock(ConfigSnapshot cfg, String bar) {
         long ms = System.currentTimeMillis();
         String tvTz = java.util.TimeZone.getDefault().getID();
-        // one read of the screensaver's settings (its ConfigProvider, same signing key) for the whole tick; null zone = it is missing: the TV's own
-        ConfigSnapshot cfg = ConfigSnapshot.read(this);
-        Digits.remember(this, cfg);   // a change of the setting reaches the next tick
         String[] zone = cfg.cityZone();
         String tz = zone == null ? tvTz : zone[1];
         Calendar now = ClockZone.at(ms, tz);   // the city's time, like the prayer times beside it
@@ -950,14 +963,12 @@ public class MainActivity extends Activity {
         } catch (Exception ignored) { }
         String greg = gregFormat.format(now.getTime());
         date.setText(arabicDigits(hijri.isEmpty() ? greg : hijri + "  –  " + greg));
-        updateAdhanBar(cfg);
-        sa.mytv.home.tilawah.AdhanSync.onConfig(this, cfg.fragment);   // «تعديل وقت الصلاة» changed on the TV: the alarm follows
+        updateAdhanBar(bar);
         updateSleepPill();
     }
 
     /** Once a minute with the clock: the bar before the adhan shows in the last 10 minutes, and until the iqama. */
-    private void updateAdhanBar(ConfigSnapshot cfg) {
-        String words = AdhanBar.text(this, cfg);
+    private void updateAdhanBar(String words) {
         adhanBar.setVisibility(words == null ? View.GONE : View.VISIBLE);
         if (words != null) adhanBar.setText(words);
     }
@@ -1139,7 +1150,13 @@ public class MainActivity extends Activity {
     private void nextWallpaper() {
         handler.removeCallbacks(rotateWallpaper);
         if (wallpapers.length == 0) return;
-        final Object[] own = ownInfo();
+        wallChangedAt = SystemClock.elapsedRealtime();   // set now: onResume must not ask for another while this one is on its way
+        scheduleWallpaper(WALLPAPER_INTERVAL_MS);
+        bg.execute(() -> { final Object[] own = ownInfo(); runOnUiThread(() -> { if (!isDestroyed()) pickWallpaper(own); }); });
+    }
+
+    /** The next photo of ours, the hosted ones and the owner's (own = ownInfo()), decoded off the main thread. */
+    private void pickWallpaper(final Object[] own) {
         final int ownCount = (Integer) own[0];
         final boolean only = ownCount > 0 && "only".equals(own[1]);
         prefs().edit().putLong("ownRev", (Long) own[2]).apply();
@@ -1149,7 +1166,6 @@ public class MainActivity extends Activity {
         if (wallIndex < 0) wallIndex = prefs().getInt("wallpaper", -1);
         wallIndex = (wallIndex + 1) % total;
         prefs().edit().putInt("wallpaper", wallIndex).apply();
-        wallChangedAt = SystemClock.elapsedRealtime();
         final int idx = wallIndex;
         final String fallback = "wallpapers/" + wallpapers[idx % wallpapers.length];
         new Thread(() -> {
@@ -1188,7 +1204,6 @@ public class MainActivity extends Activity {
             Bitmap result = bm;
             runOnUiThread(() -> showWallpaper(result));
         }).start();
-        scheduleWallpaper(WALLPAPER_INTERVAL_MS);
     }
 
     private void showWallpaper(Bitmap bm) {

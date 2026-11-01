@@ -611,6 +611,8 @@ public class SettingsActivity extends Activity {
     }
 
     private interface Url { String of(String value); }
+    /** The page's own call that shows a choice in the page already open (window.mytvLook), or null: load the page for it */
+    private interface Look { String js(String value); }
     private interface Pick { void on(String value); }
 
     /**
@@ -621,6 +623,11 @@ public class SettingsActivity extends Activity {
      */
     private void pickWithPreview(String title, final String[] values, final String[] labels, final String[] about, int selected,
                                  final Url urlFor, final Pick onPick) {
+        pickWithPreview(title, values, labels, about, selected, urlFor, null, onPick);
+    }
+
+    private void pickWithPreview(String title, final String[] values, final String[] labels, final String[] about, int selected,
+                                 final Url urlFor, final Look look, final Pick onPick) {
         final int previewW = 480, viewH = 300, pad = 22;   // dp: the page is laid out in a box like the home screen's, 480 wide
         final LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.HORIZONTAL);
@@ -638,8 +645,9 @@ public class SettingsActivity extends Activity {
                 r.setOrientation(LinearLayout.VERTICAL);
                 r.setPadding(dp(16), dp(10), dp(16), dp(10));
                 TextView n = new TextView(SettingsActivity.this);
-                n.setText(conv(labels[i]));
-                n.setTextColor(0xFFF6EFE0);
+                // the saved choice carries a gold ✓: the preview follows the cursor, so it alone does not say what is saved
+                n.setText(i == selected ? conv(labels[i]) + "  ✓" : conv(labels[i]));
+                n.setTextColor(i == selected ? 0xFFE9C987 : 0xFFF6EFE0);
                 n.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19);
                 n.setTypeface(font("Thmanyah-Medium"));
                 r.addView(n);
@@ -703,6 +711,12 @@ public class SettingsActivity extends Activity {
                 wp.topMargin = dp(pad);
                 wp.leftMargin = wp.rightMargin = dp(pad);
                 stage.addView(web[0], wp);
+            } else if (look != null) {   // the look alone changes: the page already open shows it, no new load of the whole page
+                final String again = u;
+                final android.webkit.WebView w = web[0];
+                w.evaluateJavascript("window.mytvLook?mytvLook(" + look.js(values[i]) + "):0", r -> {
+                    if (web[0] == w && !"1".equals(r)) w.loadUrl(again);   // an older page, or not loaded yet: load it
+                });
             } else {   // the page reads its settings once, when it starts: load it again, no reload() (that would redo the old URL)
                 web[0].loadUrl(u);
             }
@@ -719,7 +733,24 @@ public class SettingsActivity extends Activity {
         });
         final AlertDialog dialog = new Dlg(this).setTitle(title).setView(box)
             .setNegativeButton("إلغاء", null).create();
-        lv.setOnItemClickListener((p, v, pos, id) -> { onPick.on(values[pos]); dialog.dismiss(); render(); });
+        final Pick save = v -> {
+            onPick.on(v);
+            for (int i = 0; i < values.length; i++) if (values[i].equals(v)) toast("تم: " + labels[i]);
+            dialog.dismiss();
+            render();
+        };
+        lv.setOnItemClickListener((p, v, pos, id) -> save.on(values[pos]));
+        // Back on a choice other than the saved one: the preview showed it, so it looked chosen. Ask rather than drop it.
+        dialog.setOnKeyListener((d, key, ev) -> {
+            if (key != android.view.KeyEvent.KEYCODE_BACK || ev.getAction() != android.view.KeyEvent.ACTION_UP) return false;
+            final int at = lv.getSelectedItemPosition();
+            if (at < 0 || at == selected) return false;
+            new Dlg(this).setTitle("حفظ «" + labels[at] + "»؟")
+                .setPositiveButton("حفظ", (d2, w) -> save.on(values[at]))
+                .setNegativeButton("بدون حفظ", (d2, w) -> dialog.dismiss())
+                .show();
+            return true;
+        });
         dialog.setOnShowListener(d -> {
             dress(dialog);
             dialog.getWindow().setLayout(Math.min(getResources().getDisplayMetrics().widthPixels - dp(48), dp(940)), android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -866,7 +897,8 @@ public class SettingsActivity extends Activity {
         for (int i = 0; i < labels.length; i++) { values[i] = Prefs.CARD_STYLES[i][0]; about[i] = Prefs.about(Prefs.CARD_STYLE_ABOUT, values[i]); }
         // the preview is the card you have now, in the style under the cursor (the prayer times when there is no card)
         final String card = "none".equals(prefs.panel()) ? "prayers" : prefs.panel();
-        pickWithPreview("شكل البطاقة", values, labels, about, sel, v -> prefs.previewUrl(this, card, v), v -> prefs.setCardStyle(v));
+        pickWithPreview("شكل البطاقة", values, labels, about, sel, v -> prefs.previewUrl(this, card, v),
+            v -> "'" + v + "','" + prefs.swash() + "'", v -> prefs.setCardStyle(v));
     }
 
     /** «الحروف المرسلة»: Thmanyah's swash letters; the preview is the card you have now with the choice under the cursor */
@@ -881,7 +913,7 @@ public class SettingsActivity extends Activity {
         }
         final String card = "none".equals(prefs.panel()) ? "prayers" : prefs.panel();
         pickWithPreview("الحروف المرسلة", values, labels, about, sel,
-            v -> prefs.previewUrl(this, card, prefs.cardStyle(), v), v -> prefs.setSwash(v));
+            v -> prefs.previewUrl(this, card, prefs.cardStyle(), v), v -> "'" + prefs.cardStyle() + "','" + v + "'", v -> prefs.setSwash(v));
     }
 
     private void pickSlot() {

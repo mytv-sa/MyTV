@@ -2410,7 +2410,8 @@ const barAt = (p, day, hhmm, ss = '00') => p.evaluate(([iso, times]) => {
   window.Date = class extends R { constructor(...a) { a.length ? super(...a) : super(T); } static now() { return T; } };
   eval(times); tickPrayer();
   const b = document.getElementById('adbar'), cs = getComputedStyle(b), r = b.getBoundingClientRect();
-  return { hidden: b.hidden || cs.display === 'none', text: b.textContent, top: r.top, h: r.height, w: r.width, panel: document.getElementById('prayer-count').textContent };
+  return { hidden: b.hidden || cs.display === 'none', text: b.textContent, top: r.top, h: r.height, w: r.width, mid: r.left + r.width / 2,
+    clear: [document.querySelector('.dates'), document.querySelector('.markets')].every(e => { const q = e.getBoundingClientRect(); return r.right <= q.left || r.left >= q.right; }), panel: document.getElementById('prayer-count').textContent };
 }, [`${day}T${hhmm}:${ss}+03:00`, ADHAN_TIMES]);
 for (const [width, height] of [[1920, 1080], [1280, 720], [960, 540]]) {
   for (const digits of ['hindi', 'latin']) {
@@ -2430,9 +2431,10 @@ for (const [width, height] of [[1920, 1080], [1280, 720], [960, 540]]) {
       && r.isha.text === N('الإقامة بعد ١٥ دقيقة') && r.dhuhr.text === N('الإقامة بعد ٢٠ دقيقة'), JSON.stringify([r.at.text, r.q5.text, r.end.hidden, r.fajr.text, r.asr.text, r.isha.text, r.dhuhr.text]));
     check(`${tag}: Friday's Dhuhr has no iqama countdown, the adhan countdown before it is there; between prayers nothing`,
       r.dhuhrFri.hidden && !r.beforeFriday.hidden && r.none.hidden, JSON.stringify([r.dhuhrFri, r.beforeFriday.hidden, r.none.hidden]));
-    check(`${tag}: a slim bar at the very top, across the screen`, r.m8.top === 0 && r.m8.h > 12 && r.m8.h < 0.035 * height + 1 && r.m8.w === width, JSON.stringify(r.m8));
-    const clear = await p.evaluate(() => document.getElementById('adbar').getBoundingClientRect().bottom <= document.querySelector('.top').getBoundingClientRect().top + 1);
-    check(`${tag}: the bar is above the date block and the weather (they start below it)`, clear, JSON.stringify(r.m8));
+    // a TV crops a few percent of each edge (overscan): on the top edge the old bar was cut
+    check(`${tag}: a pill in the middle of the header's row, off the top edge`,
+      r.m8.top >= 0.03 * height && r.m8.h > 12 && r.m8.h < 0.06 * height && Math.abs(r.m8.mid - width / 2) < 2 && r.m8.w < 0.4 * width, JSON.stringify(r.m8));
+    check(`${tag}: the pill is between the date block and the weather, over neither`, r.m8.clear && r.q5.clear, JSON.stringify([r.m8, r.q5]));
     await ctx.close();
   }
 }
