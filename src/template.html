@@ -1754,7 +1754,8 @@ function fitGameRow(li){
   if(when){ if(when.dataset.full === undefined) when.dataset.full = when.textContent; when.textContent = when.dataset.full; }
   row.style.fontSize = '';
   row.classList.remove('nocr');
-  const size = (steps = FIT_STEPS) => steps.find(k => { row.style.fontSize = k === 1 ? '' : k + 'em'; return !rowCut(row); });
+  // rowCut lets a child stick out by half a pixel; fits() is what cuts the text, to 0.05 px: a row has to pass both
+  const size = (steps = FIT_STEPS) => steps.find(k => { row.style.fontSize = k === 1 ? '' : k + 'em'; return !rowCut(row) && fits(row); });
   if(size([1])) return;
   shorten(row);
   if(size([1])) return;

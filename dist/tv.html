@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- the build: UTC time (YYYYMMDDHHMMSS) of the newest commit of the page's sources, put in by src/build.py. The app loads the page with the newer stamp (its own
      copy or a downloaded one), never by file time, and does not keep a download whose stamp is older than its own (Updater, PageStamp). -->
-<meta name="mytv-build" content="20261030191407">
+<meta name="mytv-build" content="20261101070847">
 <title>شاشة تلفزيوني</title>
 <style>
   @font-face{font-family:'Thmanyah';font-weight:300;font-style:normal;font-display:block;src:url("https://raw.githubusercontent.com/mytv-sa/MyTV/master/assets/fonts/Thmanyah-Light.woff2") format("woff2")}
@@ -1599,7 +1599,7 @@ function fitGameRow(li){
   if(when){ if(when.dataset.full === undefined) when.dataset.full = when.textContent; when.textContent = when.dataset.full; }
   row.style.fontSize = '';
   row.classList.remove('nocr');
-  const size = (steps = FIT_STEPS) => steps.find(k => { row.style.fontSize = k === 1 ? '' : k + 'em'; return !rowCut(row); });
+  const size = (steps = FIT_STEPS) => steps.find(k => { row.style.fontSize = k === 1 ? '' : k + 'em'; return !rowCut(row) && fits(row); });
   if(size([1])) return;
   shorten(row);
   if(size([1])) return;
