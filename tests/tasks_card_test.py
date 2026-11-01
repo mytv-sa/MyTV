@@ -21,7 +21,8 @@ check("HomeCard: still one WebView, never focusable itself, nothing inside it ta
       card.count("new WebView(") == 1 and "web.setFocusable(false)" in card and "FOCUS_BLOCK_DESCENDANTS" in card)
 check("HomeCard: the WebView keeps setTextZoom(100)", "setTextZoom(100)" in card)
 check("HomeCard: the focus target exists only when «المهام» is among the cards, and goes with the page",
-      "if (tasks) addTarget();" in card and "parent.removeView(target)" in card and "tasks = HomeCardChoice.hasTasks(choice)" in card)
+      "if (tasks) addTarget();" in card and "parent.removeView(target)" in card and "HomeCardChoice.hasTasks(choice)" in card
+      and "tasks = w.tasks;" in card)
 check("HomeCard: the target is a plain focusable View with the page's ring switched by setLiveFocus",
       "target.setFocusable(true)" in card and 'setLiveFocus(" + has + ")"' in card and "target.setOnClickListener(v -> live.open())" in card)
 check("HomeCard: the target is moved over the card by what the page says (liveRect, in dp), not by a guess",
@@ -31,7 +32,7 @@ check("MainActivity: OK on the card opens the list with EXTRA_MIC", "putExtra(Ta
 check("MainActivity: the card sits between the pills and the dock: pills down -> card, card down -> dock, dock up -> card, card up -> the pill it came from",
       "p.setNextFocusDownId(card != null ? card.getId()" in main and "card.setNextFocusDownId(dockId" in main
       and "int topId = card != null ? card.getId() : pills.get(0).getId();" in main and "card.setNextFocusUpId(v.getId())" in main)
-check("MainActivity: the order is re-wired when the settings bring the card or take it away", "wireFocus();   // the «المهام» card may have come or gone" in main)
+check("MainActivity: the order is re-wired when the settings bring the card or take it away", "homeCard.refresh(bg, this::wireFocus);   // the «المهام» card may have come or gone" in main)
 check("TasksActivity: from the card the first render focuses «🎤 تكلّم», later ones the list as before",
       'EXTRA_MIC = "mic"' in tasks and "if (micFirst && mic.getVisibility() == View.VISIBLE) f = mic;" in tasks and "micFirst = false;" in tasks)
 check("TasksActivity: the mic still starts the voice adding on OK", 'mic = pill("🎤 تكلّم", GOLD, v -> listen());' in tasks)
