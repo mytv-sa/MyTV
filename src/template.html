@@ -2515,7 +2515,22 @@ function shrinkCard(c, tooWide){   // false when there is no step left
   if(cap !== c.cap || maxLen !== c.maxLen){ c.cap = cap; c.maxLen = maxLen; renderCard(c, false, true); }
   return true;
 }
+// The screensaver's one card: a long text a step smaller still when its length class (quoteSize) left the card taller than 42% of
+// the screen. The date line beside it is wider in some months (جمادى الأولى), so the card is narrower and the same text taller.
+const Q_STEPS = ['q1', 'q2', 'q3', 'q4'];
+function fitQuote(c){
+  const q = c.el.querySelector('li.quote');
+  if(!q) return;
+  while(c.el.offsetHeight > .42 * innerHeight - 1){
+    const at = Q_STEPS.findIndex(s => q.classList.contains(s));
+    if(at === Q_STEPS.length - 1) return;
+    if(at >= 0) q.classList.remove(Q_STEPS[at]);
+    q.classList.add(Q_STEPS[at + 1]);
+  }
+}
+
 function fitCards(){
+  if(!CONFIG.widget && CARDS.length === 1) fitQuote(CARDS[0]);
   if(!CONFIG.widget || CARDS.length < 2) return;
   const mid = document.querySelector('.mid');
   for(let g = 0; g < 120; g++){
