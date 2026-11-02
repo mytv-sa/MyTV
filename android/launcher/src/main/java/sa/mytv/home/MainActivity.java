@@ -256,8 +256,9 @@ public class MainActivity extends Activity {
     // ---------------------------------------------------------------- layout
 
     private View buildUi() {
+        // No black of its own: the window's is under the first photo, and goes once it shows (see showWallpaper). Each full-screen
+        // layer is drawn again for every frame of a focus animation, and this TV's GPU took ~10 ms a frame for five of them.
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
         // The home is built in code, so it inherits no direction from the window: set it here and
         // the pills, the favourites and the app rows all read from right to left.
         root.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
@@ -267,11 +268,7 @@ public class MainActivity extends Activity {
         wallFront = wallpaperLayer();
         root.addView(wallBack, new FrameLayout.LayoutParams(-1, -1));
         root.addView(wallFront, new FrameLayout.LayoutParams(-1, -1));
-        // Scrim: darker at the top (clock, pills) and bottom (dock) so text stays readable.
-        View scrim = new View(this);
-        scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{0xB3000000, 0x40000000, 0x26000000, 0x8C000000, 0xE6000000}));
-        root.addView(scrim, new FrameLayout.LayoutParams(-1, -1));
+        // The scrim (darker at the top and the bottom) is painted into each photo as it is decoded: withScrim
         gridShade = flatView();
         gridShade.setBackgroundColor(0xB3000000);
         gridShade.setAlpha(0f);
@@ -1142,6 +1139,34 @@ public class MainActivity extends Activity {
         }
     }
 
+    /**
+     * The photo cropped to the screen as the view would (CENTER_CROP), with the scrim painted over it: darker at the top (clock,
+     * pills) and the bottom (dock) so the text stays readable. One picture to draw a frame, not a photo and a gradient over it.
+     */
+    private Bitmap withScrim(Bitmap photo) {
+        if (photo == null) return null;
+        android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getRealMetrics(dm);
+        int w = dm.widthPixels, h = dm.heightPixels;
+        Bitmap out;
+        try {
+            out = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565);
+        } catch (OutOfMemoryError e) {
+            return photo;
+        }
+        Canvas c = new Canvas(out);
+        float scale = Math.max((float) w / photo.getWidth(), (float) h / photo.getHeight());
+        float pw = photo.getWidth() * scale, ph = photo.getHeight() * scale;
+        android.graphics.RectF to = new android.graphics.RectF((w - pw) / 2, (h - ph) / 2, (w + pw) / 2, (h + ph) / 2);
+        c.drawBitmap(photo, null, to, new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG));
+        GradientDrawable scrim = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0xB3000000, 0x40000000, 0x26000000, 0x8C000000, 0xE6000000});
+        scrim.setBounds(0, 0, w, h);
+        scrim.draw(c);
+        photo.recycle();
+        return out;
+    }
+
     /** Opens the same photo again: the first pass reads only its size. */
     private interface Source { java.io.InputStream open() throws java.io.IOException; }
 
@@ -1238,7 +1263,7 @@ public class MainActivity extends Activity {
                 try { bm = decode(() -> getAssets().open(fallback)); }
                 catch (java.io.IOException ignored) { }
             }
-            Bitmap result = bm;
+            Bitmap result = withScrim(bm);
             runOnUiThread(() -> showWallpaper(result));
         }).start();
     }
@@ -1256,6 +1281,7 @@ public class MainActivity extends Activity {
         wallFront.setAlpha(0f);
         final ImageView shown = wallFront;
         shown.animate().alpha(1f).setDuration(firstWallpaper ? 600 : 2000).withEndAction(() -> {
+            getWindow().setBackgroundDrawable(null);   // a photo covers the screen from now on: the window's black is one layer less
             // release the previous photo: the view this fade was above, not whichever is behind by now (a newer photo may have swapped them)
             if (old != wallFront && old != shown) old.setImageDrawable(null);
         }).start();
