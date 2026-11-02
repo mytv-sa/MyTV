@@ -167,6 +167,7 @@ final class PrayerTimes {
 
     /** The same, on the caller's thread (which must not be the main one). True when new times were kept. */
     static boolean refreshNow(Context c) {
+        if (!sa.mytv.home.SystemTime.isSet()) return false;   // not another day's times, kept as today's
         final Place place = Place.get(c);
         final Calendar day = Calendar.getInstance(TimeZone.getTimeZone(place.tz), Locale.US);
         final String key = key(day, place);

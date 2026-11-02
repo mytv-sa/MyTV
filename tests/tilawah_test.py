@@ -280,6 +280,11 @@ check("the adhan only starts while the screen is on", "isInteractive" in adhan_r
 check("no adhan is made up after a reboot or a missed prayer",
       "CATCH_UP" not in adhan_receiver_src and "catchUp" not in adhan_receiver_src)
 check("the adhan stops when the screen goes off", "ACTION_SCREEN_OFF" in service_src)
+check("a late alarm (the clock jumped after a power cut) shows no card",
+      "adhanInTime(due, now)" in adhan_receiver_src and "jumuahInTime(dhuhr, now)" in adhan_receiver_src
+      and "LATE = 10 * 60_000L" in adhan_receiver_src)
+check("nothing is set or asked for on a clock not set yet",
+      all("SystemTime.isSet()" in text(TILAWAH / f) for f in ("AdhanReceiver.java", "AdhanScheduler.java", "JumuahScheduler.java", "PrayerTimes.java")))
 
 workflow = text(ROOT / ".github/workflows/android.yml")
 check("CI no longer builds a listening APK", "mytv-listening" not in workflow)

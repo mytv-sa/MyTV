@@ -3164,6 +3164,14 @@ for (const [w, h] of [[1920, 1080], [1280, 720], [960, 540]]) {
   check('yearstrip: after Riyadh midnight today moves on to day 297 (296 lit now, 295 before)', before.on === 295 && before.now === 1 && after.on === 296 && after.now === 1, JSON.stringify([before.on, after.on]));
   await o.ctx.close();
 }
+{   // a TV cut off at the wall starts on 2024 (its system's build day): no time shown until the network's comes
+  const o = await open('tv.html', '', { now: '2024-11-18T06:11:40Z' });
+  const unset = await o.p.evaluate(() => document.getElementById('ck-h').textContent + ':' + document.getElementById('ck-m').textContent);
+  await o.p.clock.setFixedTime('2026-11-02T15:39:30Z'); await o.p.evaluate(() => tickClock());
+  const set = await o.p.evaluate(() => document.getElementById('ck-m').textContent);
+  check('clock: «--:--» on a clock not set yet, the time once it is', unset === '--:--' && set === '٣٩', JSON.stringify([unset, set]));
+  await o.ctx.close();
+}
 
 // ---- «تعديل وقت الصلاة» (#adj=): each of the five prayers moved by its own minutes, −20..20, the sunrise never. Everything that shows or
 // acts on a prayer time reads PRAYERS / DAY_TIMES: the next prayer, the card of the day's prayers, the row, the adhan bar, the iqama

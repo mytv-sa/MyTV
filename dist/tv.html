@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- the build: UTC time (YYYYMMDDHHMMSS) of the newest commit of the page's sources, put in by src/build.py. The app loads the page with the newer stamp (its own
      copy or a downloaded one), never by file time, and does not keep a download whose stamp is older than its own (Updater, PageStamp). -->
-<meta name="mytv-build" content="20261101070847">
+<meta name="mytv-build" content="20261101081549">
 <title>شاشة تلفزيوني</title>
 <style>
   @font-face{font-family:'Thmanyah';font-weight:300;font-style:normal;font-display:block;src:url("https://raw.githubusercontent.com/mytv-sa/MyTV/master/assets/fonts/Thmanyah-Light.woff2") format("woff2")}
@@ -724,7 +724,14 @@ function fmt12(h, mi){
 function setText(el, v){ if(el.textContent !== v) el.textContent = v; }
 function setHTML(el, h, force){ if(force || el.__h !== h){ el.__h = h; el.innerHTML = h; return true; } return false; }
 
+const CLOCK_SET_AFTER = Date.UTC(2026, 0, 1);
 function tickClock(){
+  if(Date.now() < CLOCK_SET_AFTER){
+    if(tickClock.last === 'unset') return;
+    tickClock.last = 'unset';
+    setText(document.getElementById('ck-h'), '--'); setText(document.getElementById('ck-m'), '--'); setText(document.getElementById('ck-ap'), '—');
+    return;
+  }
   const p = riyadhParts();
   const h12 = p.h % 12 === 0 ? 12 : p.h % 12;
   const digits = s => [...s].map(ch => '<i>' + ch + '</i>').join('');
@@ -3084,7 +3091,7 @@ function boot(){
 
   nowPlayingTick();
   setInterval(nowPlayingTick, 60*1000);
-  setInterval(tickClock, 1000);
+  (function clockLoop(){ tickClock(); setTimeout(clockLoop, 1005 - Date.now() % 1000); })();   // on the second, not drifting from it
   setInterval(()=>{ tickDates(); tickPrayer(); tickOccasion(); wxExpire(); if(!SLOT_MATCHES) renderSlot(); }, 15000);
   if(SLOT_MATCHES){   // the matches timers run only while the slot shows matches
     setInterval(() => renderMatches(false), 60000);

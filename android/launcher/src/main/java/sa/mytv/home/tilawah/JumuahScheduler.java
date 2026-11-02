@@ -26,7 +26,7 @@ final class JumuahScheduler {
         AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
         if (am == null) return;
         am.cancel(pending(c, 0));
-        if (!new Prefs(c).jumuahOn()) return;
+        if (!new Prefs(c).jumuahOn() || !sa.mytv.home.SystemTime.isSet()) return;
         long dhuhr = nextJumuah(c);
         if (dhuhr == 0) return;
         PendingIntent pending = pending(c, dhuhr);

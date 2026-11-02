@@ -27,7 +27,7 @@ final class AdhanScheduler {
         if (am == null) return;
         am.cancel(pending(c, 0));
         cancelLegacy(c, am);
-        if (!new Prefs(c).adhanOn()) return;
+        if (!new Prefs(c).adhanOn() || !sa.mytv.home.SystemTime.isSet()) return;   // a clock two years back: TIME_SET sets it again
         PrayerTimes.Next next = PrayerTimes.next(c);
         if (next == null) return;
         Adhan.prefetchChosen(c);   // the recording is on the TV before its prayer, not fetched while it should be playing

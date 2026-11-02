@@ -125,9 +125,24 @@ public class MainActivity extends Activity {
     // when the TV has closed that app to free memory, a read starts it again (a few hundred ms), and Home froze on its way back.
     private final java.util.concurrent.ExecutorService bg = java.util.concurrent.Executors.newSingleThreadExecutor();
 
+    // The clock turns on its own timer, at the minute's first millisecond: TIME_TICK comes late on a busy TV, by seconds and more.
+    // The tick still comes, for the wifi and the sleep timer.
+    private ConfigSnapshot lastCfg;
+    private String lastBar;
+    private final Runnable minute = new Runnable() {
+        @Override public void run() {
+            updateClock();
+            handler.postDelayed(this, 60_000 - System.currentTimeMillis() % 60_000 + 20);
+        }
+    };
+
     private final BroadcastReceiver tick = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
-            updateClock();
+            String a = i.getAction();
+            if (Intent.ACTION_TIME_CHANGED.equals(a) || Intent.ACTION_TIMEZONE_CHANGED.equals(a)) {   // the clock or its zone changed: from now
+                handler.removeCallbacks(minute);
+                minute.run();
+            }
             updateWifi();
             updateNowPlaying();   // the minutes left of its sleep timer
         }
@@ -183,7 +198,8 @@ public class MainActivity extends Activity {
         tf.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         tf.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         registerReceiver(tick, tf);
-        updateClock();
+        if (lastCfg != null) showClock(lastCfg, lastBar);   // back from the screensaver: the time at once, the settings after
+        minute.run();
         updateWifi();
         updateNowPlaying();
         homeCard.refresh(bg, this::wireFocus);   // the «المهام» card may have come or gone with the settings
@@ -205,6 +221,7 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         handler.removeCallbacks(rotateWallpaper);
+        handler.removeCallbacks(minute);
         unregisterReceiver(tick);
         if (inputsPopup != null) inputsPopup.dismiss();
         homeCard.pause();
@@ -255,7 +272,7 @@ public class MainActivity extends Activity {
         scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                 new int[]{0xB3000000, 0x40000000, 0x26000000, 0x8C000000, 0xE6000000}));
         root.addView(scrim, new FrameLayout.LayoutParams(-1, -1));
-        gridShade = new View(this);
+        gridShade = flatView();
         gridShade.setBackgroundColor(0xB3000000);
         gridShade.setAlpha(0f);
         root.addView(gridShade, new FrameLayout.LayoutParams(-1, -1));
@@ -263,7 +280,7 @@ public class MainActivity extends Activity {
             wallpapers = getAssets().list("wallpapers");
         } catch (java.io.IOException ignored) { }
 
-        glow = new View(this);
+        glow = flatView();
         root.addView(glow, new FrameLayout.LayoutParams(-1, -1));
         setGlow(glowColor);
 
@@ -599,7 +616,7 @@ public class MainActivity extends Activity {
         ring.setStroke(dp(2), 0xE6FFFFFF);
         ring.setOrientation(GradientDrawable.Orientation.TL_BR);
         ring.setColors(new int[]{0x26FFFFFF, 0x00FFFFFF, 0x00FFFFFF});
-        View shine = new View(this);
+        View shine = flatView();
         shine.setBackground(ring);
         shine.setAlpha(0f);
         card.addView(shine, new FrameLayout.LayoutParams(-1, -1));
@@ -932,7 +949,11 @@ public class MainActivity extends Activity {
 
     /** null zone = the screensaver's settings are missing: the TV's own. bar: the adhan bar's words, or null. */
     private void showClock(ConfigSnapshot cfg, String bar) {
+        lastCfg = cfg;
+        lastBar = bar;
         long ms = System.currentTimeMillis();
+        boolean set = SystemTime.isSet(ms);   // the first minute after a power cut: 2024's day is no time to show
+        for (View v : new View[]{clock, ampm, date}) v.setVisibility(set ? View.VISIBLE : View.INVISIBLE);
         String tvTz = java.util.TimeZone.getDefault().getID();
         String[] zone = cfg.cityZone();
         String tz = zone == null ? tvTz : zone[1];
@@ -995,14 +1016,30 @@ public class MainActivity extends Activity {
 
     // ---------------------------------------------------------------- glow
 
+    private GradientDrawable glowShape;
+
+    /**
+     * The glow is one white gradient, made once, coloured by a filter: the colour animation changes the filter alone. A new
+     * full-screen gradient for each of its frames (as before) made the TV miss most frames while the remote moved along the dock.
+     */
     private void setGlow(int color) {
         glowColor = color;
-        GradientDrawable g = new GradientDrawable();
-        g.setGradientType(GradientDrawable.RADIAL_GRADIENT);
-        g.setGradientCenter(0.5f, 0.78f);
-        g.setGradientRadius(getResources().getDisplayMetrics().widthPixels * 0.62f);
-        g.setColors(new int[]{withAlpha(color, 0.5f), withAlpha(color, 0.14f), Color.TRANSPARENT});
-        glow.setBackground(g);
+        if (glowShape == null) {
+            glowShape = new GradientDrawable();
+            glowShape.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+            glowShape.setGradientCenter(0.5f, 0.78f);
+            glowShape.setGradientRadius(getResources().getDisplayMetrics().widthPixels * 0.62f);
+            glowShape.setColors(new int[]{withAlpha(Color.WHITE, 0.5f), withAlpha(Color.WHITE, 0.14f), Color.TRANSPARENT});
+            glow.setBackground(glowShape);
+        }
+        glowShape.setColorFilter(new android.graphics.PorterDuffColorFilter(color | 0xFF000000, android.graphics.PorterDuff.Mode.SRC_IN));
+    }
+
+    /** A view that draws only its background: faded without the off-screen copy Android makes for a view that might overlap itself. */
+    private View flatView() {
+        return new View(this) {
+            @Override public boolean hasOverlappingRendering() { return false; }
+        };
     }
 
     private void animateGlow(int to) {

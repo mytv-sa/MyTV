@@ -792,7 +792,15 @@ function fmt12(h, mi){
 function setText(el, v){ if(el.textContent !== v) el.textContent = v; }
 function setHTML(el, h, force){ if(force || el.__h !== h){ el.__h = h; el.innerHTML = h; return true; } return false; }
 
+// A TV cut off at the wall starts on its system's build day (2024) and gets the time a minute later: no clock until then
+const CLOCK_SET_AFTER = Date.UTC(2026, 0, 1);
 function tickClock(){
+  if(Date.now() < CLOCK_SET_AFTER){
+    if(tickClock.last === 'unset') return;
+    tickClock.last = 'unset';
+    setText(document.getElementById('ck-h'), '--'); setText(document.getElementById('ck-m'), '--'); setText(document.getElementById('ck-ap'), '—');
+    return;
+  }
   const p = riyadhParts();
   const h12 = p.h % 12 === 0 ? 12 : p.h % 12;
   // one box per digit: browsers ignore letter-spacing on Arabic digits, and ٤ reaches into the next digit
@@ -3379,7 +3387,7 @@ function boot(){
 
   nowPlayingTick();
   setInterval(nowPlayingTick, 60*1000);
-  setInterval(tickClock, 1000);
+  (function clockLoop(){ tickClock(); setTimeout(clockLoop, 1005 - Date.now() % 1000); })();   // on the second, not drifting from it
   setInterval(()=>{ tickDates(); tickPrayer(); tickOccasion(); wxExpire(); if(!SLOT_MATCHES) renderSlot(); }, 15000);
   if(SLOT_MATCHES){   // the matches timers run only while the slot shows matches
     setInterval(() => renderMatches(false), 60000);
